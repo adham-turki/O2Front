@@ -287,6 +287,8 @@ export default function EnhancedTicketWorkflow() {
                     size="small"
                     variant="outlined"
                     sx={{ m: 0.5 }}
+                    color="secondary"
+
                   />
                 ))}
               </Box>

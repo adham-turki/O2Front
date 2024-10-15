@@ -10,6 +10,8 @@ import { useEffect, useState } from 'react';
 import TicketWorkflow from './components/TicketFlow';
 import CustomerDashboard from './components/Customer';
 import Component from './components/funnel';
+import Sankey from './components/SankeyChart';
+
 
 function App() {
   const [tickets, setTickets] = useState([]);
@@ -31,7 +33,7 @@ function App() {
     <Router>
       <div style={{ display: 'flex' }}>
         <Sidebar />
-        <div style={{ flexGrow: 1, padding: '20px', marginTop: '48px' }}>
+        <div style={{ flexGrow: 1, marginTop: '48px' }}>
           <Routes>
             <Route path="/" element={<Navigate to="/main-dashboard" />} />
             <Route path="/main-dashboard" element={<MainDashboard ticketData={tickets} />} />
@@ -41,13 +43,13 @@ function App() {
             <Route path="/manager-dashboard" element={<ManagerDashboard ticketData={tickets} />} />
             <Route path="/ticket-flow" element={<TicketWorkflow />} />
             <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+            <Route path="/tickets-funnel" element={<Sankey />} />
+            <Route path="/advanced-tickets-funnel" element={<Component />} />
           </Routes>
         </div>
       </div>
     </Router>
-    // <>
-    // <Component />
-    // </>
+   
 
   );
 }

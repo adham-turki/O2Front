@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, IconButton, ThemeProvider, createTheme, CssBaseline, styled } from '@mui/material';
 import { Menu as MenuIcon, Dashboard as DashboardIcon, Support as SupportIcon, Engineering as EngineeringIcon, Business as BusinessIcon, BarChart as BarChartIcon, Assignment as AssignmentIcon, Person as PersonIcon } from '@mui/icons-material';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -57,6 +58,10 @@ const dashboards = [
   { name: 'Custom Dashboard', icon: <BarChartIcon />, path: '/custom-dashboard' },
   { name: 'Ticket Workflow', icon: <AssignmentIcon />, path: '/ticket-flow' },
   { name: 'Customer Dashboard', icon: <PersonIcon />, path: '/customer-dashboard' },
+  {name: 'Tickets Funnel', icon: <FilterAltIcon />, path: '/tickets-funnel' },
+  {name: 'Advanced Tickets Funnel', icon: <FilterAltIcon />, path: '/advanced-tickets-funnel' },
+
+
 ];
 
 export default function Sidebar() {

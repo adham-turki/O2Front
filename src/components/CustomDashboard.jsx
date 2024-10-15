@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -13,7 +13,6 @@ import {
   CssBaseline,
   styled,
   IconButton,
-  Tooltip as MuiTooltip
 } from '@mui/material';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import {
@@ -216,17 +215,16 @@ export default function CustomDashboard() {
         <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold', color: theme.palette.primary.main, textAlign: 'center', mb: 4 }}>
           Custom Statistics
         </Typography>
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {[
+        <Grid container spacing={3} sx={{ mb: 4 }} justifyContent="center" alignItems="center">
+        {[
             { title: 'Total Tickets', value: data.totalTickets, icon: <Dashboard /> },
-            { title: 'Open Tickets', value: data.openTickets, icon: <BugReport /> },
             { title: 'Avg. Resolution Time', value: `${data.avgResolutionTime.toFixed(2)} hrs`, icon: <AccessTime /> },
             { title: 'SLA Compliance', value: `${data.slaCompliance.toFixed(2)} `, icon: <CheckCircle /> },
           ].map((item, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <StyledCard>
+            <Grid item xs={12} sm={6} md={3} key={index} >
+              <StyledCard >
                 <StyledCardContent>
-                  <IconButton sx={{ color: 'white', mb: 2 }}>
+                  <IconButton sx={{ coloar: 'white', mb: 2 }}>
                     {item.icon}
                   </IconButton>
                   <Typography variant="h6" component="div" gutterBottom>

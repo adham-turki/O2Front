@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Card,
@@ -15,6 +15,10 @@ import {
   CssBaseline,
   styled,
   IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
 import {
@@ -25,8 +29,10 @@ import {
   Computer,
   Warning,
   DateRange,
-  Person
+  Person,
+  FilterList,
 } from '@mui/icons-material'
+import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
 
 const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
 
@@ -66,6 +72,14 @@ const StyledCardContent = styled(CardContent)({
   padding: '20px',
   color: 'white',
 })
+
+const StyledSelect = styled(Select)(({ theme }) => ({
+  minWidth: 200,
+  '& .MuiSelect-select': {
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
+  },
+}))
 
 const AnimatedNumber = ({ value, duration = 1000 }) => {
   const [count, setCount] = useState(0)
@@ -107,7 +121,7 @@ function TabPanel(props) {
   )
 }
 
-export default function CustomDashboard({  tickets }) {
+export default function CustomDashboard({ tickets }) {
   const [data, setData] = useState({
     totalTickets: 0,
     openTickets: 0,
@@ -119,11 +133,26 @@ export default function CustomDashboard({  tickets }) {
     topEngineers: [],
   })
   const [tabValue, setTabValue] = useState(0)
+  const [dateRange, setDateRange] = useState('all')
+
+  const filteredTickets = useMemo(() => {
+    if (dateRange === 'all') return tickets
+
+    const now = new Date()
+    const filterDate = {
+      'last-week': subDays(now, 7),
+      'last-month': subMonths(now, 1),
+      'last-6-months': subMonths(now, 6),
+      'last-year': subYears(now, 1)
+    }[dateRange]
+
+    return tickets.filter(ticket => isAfter(parseISO(ticket.reportedOn), filterDate))
+  }, [tickets, dateRange])
 
   useEffect(() => {
     const processData = () => {
       const result = {
-        totalTickets: tickets.length,
+        totalTickets: filteredTickets.length,
         openTickets: 0,
         avgResolutionTime: 0,
         slaCompliance: 0,
@@ -133,7 +162,7 @@ export default function CustomDashboard({  tickets }) {
         topEngineers: {},
       }
 
-      tickets.forEach(ticket => {
+      filteredTickets.forEach(ticket => {
         if (ticket.ticketStatus !== 'RESOLVED') result.openTickets++
 
         // Count type distribution
@@ -160,7 +189,7 @@ export default function CustomDashboard({  tickets }) {
       })
 
       // Calculate the final average resolution time in hours
-      result.avgResolutionTime = result.avgResolutionTime / tickets.filter(t => t.resolvedOn).length / (1000 * 60 * 60)
+      result.avgResolutionTime = result.avgResolutionTime / filteredTickets.filter(t => t.resolvedOn).length / (1000 * 60 * 60)
 
       // Calculate SLA compliance percentage
       result.slaCompliance = (result.slaCompliance / result.totalTickets) * 100
@@ -179,7 +208,7 @@ export default function CustomDashboard({  tickets }) {
     }
 
     processData()
-  }, [tickets])
+  }, [filteredTickets])
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue)
@@ -192,6 +221,24 @@ export default function CustomDashboard({  tickets }) {
         <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold', color: theme.palette.primary.main, textAlign: 'center', mb: 4 }}>
           Custom Statistics
         </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <FormControl variant="outlined">
+            <InputLabel id="date-range-label">Date Range</InputLabel>
+            <StyledSelect
+              labelId="date-range-label"
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              label="Date Range"
+              startAdornment={<FilterList sx={{ color: 'action.active', mr: 1, my: 0.5 }} />}
+            >
+              <MenuItem value="all">All Time</MenuItem>
+              <MenuItem value="last-week">Last Week</MenuItem>
+              <MenuItem value="last-month">Last Month</MenuItem>
+              <MenuItem value="last-6-months">Last 6 Months</MenuItem>
+              <MenuItem value="last-year">Last Year</MenuItem>
+            </StyledSelect>
+          </FormControl>
+        </Box>
         <Grid container spacing={3} sx={{ mb: 4 }} justifyContent="center" alignItems="center">
           {[
             { title: 'Total Tickets', value: data.totalTickets, icon: <Dashboard /> },

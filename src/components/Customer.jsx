@@ -1,13 +1,15 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
     Box, Typography, Paper, Grid, Chip, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Card, CardContent, CircularProgress, LinearProgress, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText
+    Card, CardContent, CircularProgress, LinearProgress, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText,
+    FormControl, InputLabel, Select, MenuItem
 } from '@mui/material'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider, createTheme, styled } from '@mui/material/styles'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
-import { Person, BugReport, CheckCircle, Error, AccessTime } from '@mui/icons-material'
+import { Person, BugReport, CheckCircle, Error, AccessTime, FilterList } from '@mui/icons-material'
+import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
 
 const theme = createTheme({
     palette: {
@@ -20,10 +22,19 @@ const theme = createTheme({
     },
 })
 
+const StyledSelect = styled(Select)(({ theme }) => ({
+    minWidth: 200,
+    '& .MuiSelect-select': {
+        paddingTop: theme.spacing(1),
+        paddingBottom: theme.spacing(1),
+    },
+}))
+
 export default function CustomerDashboard({ resolutions, tickets }) {
     const [loading, setLoading] = useState(true)
     const [selectedCustomer, setSelectedCustomer] = useState(null)
     const [openDialog, setOpenDialog] = useState(false)
+    const [dateRange, setDateRange] = useState('all')
 
     useEffect(() => {
         if (resolutions && tickets) {
@@ -31,9 +42,23 @@ export default function CustomerDashboard({ resolutions, tickets }) {
         }
     }, [resolutions, tickets])
 
+    const filteredTickets = useMemo(() => {
+        if (dateRange === 'all') return tickets
+
+        const now = new Date()
+        const filterDate = {
+            'last-week': subDays(now, 7),
+            'last-month': subMonths(now, 1),
+            'last-6-months': subMonths(now, 6),
+            'last-year': subYears(now, 1)
+        }[dateRange]
+
+        return tickets.filter(ticket => isAfter(parseISO(ticket.reportedOn), filterDate))
+    }, [tickets, dateRange])
+
     const getCustomerStats = () => {
         const stats = {}
-        tickets.forEach(ticket => {
+        filteredTickets.forEach(ticket => {
             ticket.domains.forEach(domain => {
                 if (!stats[domain.name]) {
                     stats[domain.name] = { total: 0, solved: 0, slaViolations: 0 }
@@ -54,7 +79,7 @@ export default function CustomerDashboard({ resolutions, tickets }) {
 
     const getCustomerTicketDistribution = () => {
         const distribution = {}
-        tickets.forEach(ticket => {
+        filteredTickets.forEach(ticket => {
             ticket.domains.forEach(domain => {
                 distribution[domain.name] = (distribution[domain.name] || 0) + 1
             })
@@ -91,6 +116,25 @@ export default function CustomerDashboard({ resolutions, tickets }) {
                     Customer Support Dashboard
                 </Typography>
 
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                    <FormControl variant="outlined">
+                        <InputLabel id="date-range-label">Date Range</InputLabel>
+                        <StyledSelect
+                            labelId="date-range-label"
+                            value={dateRange}
+                            onChange={(e) => setDateRange(e.target.value)}
+                            label="Date Range"
+                            startAdornment={<FilterList sx={{ color: 'action.active', mr: 1, my: 0.5 }} />}
+                        >
+                            <MenuItem value="all">All Time</MenuItem>
+                            <MenuItem value="last-week">Last Week</MenuItem>
+                            <MenuItem value="last-month">Last Month</MenuItem>
+                            <MenuItem value="last-6-months">Last 6 Months</MenuItem>
+                            <MenuItem value="last-year">Last Year</MenuItem>
+                        </StyledSelect>
+                    </FormControl>
+                </Box>
+
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={6} lg={3}>
                         <Card>
@@ -99,10 +143,10 @@ export default function CustomerDashboard({ resolutions, tickets }) {
                                     Total Tickets
                                 </Typography>
                                 <Typography variant="h4" component="div">
-                                    {tickets.length}
+                                    {filteredTickets.length}
                                 </Typography>
                                 <Typography color="textSecondary">
-                                    <BugReport /> All time
+                                    <BugReport /> {dateRange === 'all' ? 'All time' : `Last ${dateRange.split('-')[1]}`}
                                 </Typography>
                             </CardContent>
                         </Card>
@@ -114,7 +158,7 @@ export default function CustomerDashboard({ resolutions, tickets }) {
                                     Open Tickets
                                 </Typography>
                                 <Typography variant="h4" component="div">
-                                    {tickets.filter(ticket => ticket.ticketStatus !== 'RESOLVED').length}
+                                    {filteredTickets.filter(ticket => ticket.ticketStatus !== 'RESOLVED').length}
                                 </Typography>
                                 <Typography color="#ff6500">
                                     <Error /> Needs attention
@@ -129,7 +173,7 @@ export default function CustomerDashboard({ resolutions, tickets }) {
                                     Resolved Tickets
                                 </Typography>
                                 <Typography variant="h4" component="div">
-                                    {tickets.filter(ticket => ticket.ticketStatus === 'RESOLVED').length}
+                                    {filteredTickets.filter(ticket => ticket.ticketStatus === 'RESOLVED').length}
                                 </Typography>
                                 <Typography color="#2e7d32">
                                     <CheckCircle /> Successfully closed
@@ -227,7 +271,7 @@ export default function CustomerDashboard({ resolutions, tickets }) {
                     <DialogTitle>{`Tickets for ${selectedCustomer}`}</DialogTitle>
                     <DialogContent>
                         <List>
-                            {tickets
+                            {filteredTickets
                                 .filter(ticket => ticket.domains.some(domain => domain.name === selectedCustomer))
                                 .map(ticket => (
                                     <ListItem key={ticket.id}>

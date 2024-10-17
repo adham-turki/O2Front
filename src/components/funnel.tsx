@@ -4,59 +4,19 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertCircle, CheckCircle, Clock, User, Tag, Calendar, Layers, Hash, MessageSquare } from 'lucide-react'
 
-interface Ticket {
-  id: number
-  type: string
-  title: string
-  ticketStatus: string
-  severity: string
-  reportedOn: string
-  resolvedOn: string | null
-  priority: string
-  tiers: string
-  domains: { id: number; name: string }[]
-  tags: { id: number; label: string }[]
-  engagements: {
-    id: number
-    action: string
-    engagedOn: string
-    member: { id: number; name: string }
-  }[]
-  owner: { id: number; name: string }
-}
+const groupTickets = (tickets) => {
+  const root = { name: 'All Tickets', type: 'root', children: [], value: tickets.length }
 
-interface Resolution {
-  id: number
-  solution: string
-  rootCause: string
-}
-
-interface TreeNode {
-  name: string
-  type: 'root' | 'tier' | 'domain' | 'severity' | 'status'
-  children?: TreeNode[]
-  tickets?: Ticket[]
-  value: number
-}
-
-interface ComponentProps {
-  tickets: Ticket[]
-  resolutions: Resolution[]
-}
-
-const groupTickets = (tickets: Ticket[]): TreeNode => {
-  const root: TreeNode = { name: 'All Tickets', type: 'root', children: [], value: tickets.length }
-
-  const tiers: { [key: string]: TreeNode } = {}
-  const domains: { [key: string]: TreeNode } = {}
-  const severities: { [key: string]: TreeNode } = {}
-  const statuses: { [key: string]: TreeNode } = {}
+  const tiers = {}
+  const domains = {}
+  const severities = {}
+  const statuses = {}
 
   tickets.forEach((ticket) => {
     // Tier level
     if (!tiers[ticket.tiers]) {
       tiers[ticket.tiers] = { name: ticket.tiers, type: 'tier', children: [], value: 0 }
-      root.children!.push(tiers[ticket.tiers])
+      root.children.push(tiers[ticket.tiers])
     }
     tiers[ticket.tiers].value++
 
@@ -65,7 +25,7 @@ const groupTickets = (tickets: Ticket[]): TreeNode => {
       const domainKey = `${ticket.tiers}-${domain.name}`
       if (!domains[domainKey]) {
         domains[domainKey] = { name: domain.name, type: 'domain', children: [], value: 0 }
-        tiers[ticket.tiers].children!.push(domains[domainKey])
+        tiers[ticket.tiers].children.push(domains[domainKey])
       }
       domains[domainKey].value++
 
@@ -73,7 +33,7 @@ const groupTickets = (tickets: Ticket[]): TreeNode => {
       const severityKey = `${domainKey}-${ticket.severity}`
       if (!severities[severityKey]) {
         severities[severityKey] = { name: ticket.severity, type: 'severity', children: [], value: 0 }
-        domains[domainKey].children!.push(severities[severityKey])
+        domains[domainKey].children.push(severities[severityKey])
       }
       severities[severityKey].value++
 
@@ -81,9 +41,9 @@ const groupTickets = (tickets: Ticket[]): TreeNode => {
       const statusKey = `${severityKey}-${ticket.ticketStatus}`
       if (!statuses[statusKey]) {
         statuses[statusKey] = { name: ticket.ticketStatus, type: 'status', tickets: [], value: 0 }
-        severities[severityKey].children!.push(statuses[statusKey])
+        severities[severityKey].children.push(statuses[statusKey])
       }
-      statuses[statusKey].tickets!.push(ticket)
+      statuses[statusKey].tickets.push(ticket)
       statuses[statusKey].value++
     })
   })
@@ -91,7 +51,7 @@ const groupTickets = (tickets: Ticket[]): TreeNode => {
   return root
 }
 
-const FunnelLevel = ({ node, depth, onSelect }: { node: TreeNode; depth: number; onSelect: () => void }) => {
+const FunnelLevel = ({ node, depth, onSelect }) => {
   const maxWidth = 100 - depth * 20
   const width = `${Math.max(maxWidth, 20)}%`
   const hue = 200 + depth * 30
@@ -114,7 +74,7 @@ const FunnelLevel = ({ node, depth, onSelect }: { node: TreeNode; depth: number;
   )
 }
 
-const TicketCard = ({ ticket, onClick }: { ticket: Ticket; onClick: () => void }) => {
+const TicketCard = ({ ticket, onClick }) => {
   const statusColor = {
     'New': 'bg-yellow-100 text-yellow-800',
     'ONHOLD': 'bg-orange-100 text-orange-800',
@@ -151,10 +111,10 @@ const TicketCard = ({ ticket, onClick }: { ticket: Ticket; onClick: () => void }
   )
 }
 
-export default function Component({ tickets, resolutions }: ComponentProps) {
-  const [groupedTickets, setGroupedTickets] = useState<TreeNode | null>(null)
-  const [selectedPath, setSelectedPath] = useState<TreeNode[]>([])
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+export default function Component({ tickets = [], resolutions = [] }) {
+  const [groupedTickets, setGroupedTickets] = useState(null)
+  const [selectedPath, setSelectedPath] = useState([])
+  const [selectedTicket, setSelectedTicket] = useState(null)
 
   useEffect(() => {
     if (tickets.length > 0) {
@@ -162,7 +122,7 @@ export default function Component({ tickets, resolutions }: ComponentProps) {
     }
   }, [tickets])
 
-  const handleSelect = (node: TreeNode, depth: number) => {
+  const handleSelect = (node, depth) => {
     setSelectedPath((prev) => {
       const newPath = prev.slice(0, depth)
       newPath.push(node)
@@ -170,7 +130,7 @@ export default function Component({ tickets, resolutions }: ComponentProps) {
     })
   }
 
-  const findResolution = (ticketId: number) => {
+  const findResolution = (ticketId) => {
     return resolutions.find(resolution => resolution.id === ticketId)
   }
 
@@ -215,7 +175,7 @@ export default function Component({ tickets, resolutions }: ComponentProps) {
               exit={{ opacity: 0, y: -20 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              {selectedPath[selectedPath.length - 1].tickets!.map((ticket) => (
+              {selectedPath[selectedPath.length - 1].tickets.map((ticket) => (
                 <TicketCard
                   key={ticket.id}
                   ticket={ticket}
@@ -315,7 +275,6 @@ export default function Component({ tickets, resolutions }: ComponentProps) {
                   <div className="mt-6">
                     <h3 className="text-xl font-semibold mb-2">Resolution</h3>
                     <div className="space-y-2">
-                      
                       <div>
                         <span className="font-semibold">Root Cause: </span>
                         <span>{findResolution(selectedTicket.id)?.rootCause}</span>

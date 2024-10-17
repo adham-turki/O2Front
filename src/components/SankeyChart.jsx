@@ -61,6 +61,7 @@ export default function SankeyChart() {
             data={sankeyData}
             options={options}
             chartVersion="51"
+            className="mt-8"
         />
     );
 }

@@ -18,6 +18,10 @@ import {
   styled,
   useTheme,
   Tooltip as MuiTooltip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material'
 import {
   BarChart,
@@ -46,7 +50,9 @@ import {
   Timeline,
   Speed,
   BubbleChart,
+  FilterList,
 } from '@mui/icons-material'
+import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']
 
@@ -101,18 +107,41 @@ const IconWrapper = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }))
 
+const StyledSelect = styled(Select)(({ theme }) => ({
+  minWidth: 200,
+  '& .MuiSelect-select': {
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
+  },
+}))
+
 export default function ManagerDashboard({ resolutions, tickets }) {
   const [tabValue, setTabValue] = useState(0)
+  const [dateRange, setDateRange] = useState('all')
   const theme = useTheme()
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue)
   }
 
-  // Memoized data processing functions
+  const filteredTickets = useMemo(() => {
+    if (dateRange === 'all') return tickets
+
+    const now = new Date()
+    const filterDate = {
+      'last-week': subDays(now, 7),
+      'last-month': subMonths(now, 1),
+      'last-6-months': subMonths(now, 6),
+      'last-year': subYears(now, 1)
+    }[dateRange]
+
+    return tickets.filter(ticket => isAfter(parseISO(ticket.reportedOn), filterDate))
+  }, [tickets, dateRange])
+
+  // Memoized data processing functions (using filteredTickets instead of tickets)
   const monthlyResolutionRate = useMemo(() => {
     const monthlyData = {}
-    tickets.forEach(ticket => {
+    filteredTickets.forEach(ticket => {
       const month = new Date(ticket.reportedOn).toLocaleString('default', { month: 'long' })
       if (!monthlyData[month]) {
         monthlyData[month] = { opened: 0, resolved: 0 }
@@ -128,11 +157,11 @@ export default function ManagerDashboard({ resolutions, tickets }) {
       resolved: data.resolved,
       resolutionRate: (data.resolved / data.opened) * 100,
     }))
-  }, [tickets])
+  }, [filteredTickets])
 
   const averageResolutionTimeByMonth = useMemo(() => {
     const monthlyData = {}
-    tickets.forEach(ticket => {
+    filteredTickets.forEach(ticket => {
       if (ticket.resolvedOn) {
         const month = new Date(ticket.reportedOn).toLocaleString('default', { month: 'long' })
         if (!monthlyData[month]) {
@@ -147,11 +176,11 @@ export default function ManagerDashboard({ resolutions, tickets }) {
       month,
       avgResolutionTime: data.totalTime / data.count,
     }))
-  }, [tickets])
+  }, [filteredTickets])
 
   const averageResolutionTimeBySeverity = useMemo(() => {
     const severityData = {}
-    tickets.forEach(ticket => {
+    filteredTickets.forEach(ticket => {
       if (ticket.resolvedOn) {
         if (!severityData[ticket.severity]) {
           severityData[ticket.severity] = { totalTime: 0, count: 0 }
@@ -165,11 +194,11 @@ export default function ManagerDashboard({ resolutions, tickets }) {
       severity,
       avgResolutionTime: data.totalTime / data.count,
     }))
-  }, [tickets])
+  }, [filteredTickets])
 
   const slaComplianceBySeverity = useMemo(() => {
     const severityData = {}
-    tickets.forEach(ticket => {
+    filteredTickets.forEach(ticket => {
       if (!severityData[ticket.severity]) {
         severityData[ticket.severity] = { total: 0, compliant: 0 }
       }
@@ -182,11 +211,11 @@ export default function ManagerDashboard({ resolutions, tickets }) {
       severity,
       complianceRate: (data.compliant / data.total) * 100,
     }))
-  }, [tickets])
+  }, [filteredTickets])
 
   const ticketResolutionRateByEngineer = useMemo(() => {
     const engineerData = {}
-    tickets.forEach(ticket => {
+    filteredTickets.forEach(ticket => {
       const engineer = ticket.owner.name
       if (!engineerData[engineer]) {
         engineerData[engineer] = { resolved: 0, total: 0 }
@@ -204,12 +233,12 @@ export default function ManagerDashboard({ resolutions, tickets }) {
       }))
       .sort((a, b) => b.resolutionRate - a.resolutionRate)
       .slice(0, 10)
-  }, [tickets])
+  }, [filteredTickets])
 
   const engineerUtilizationRate = useMemo(() => {
     const engineerData = {}
-    let totalTickets = tickets.length
-    tickets.forEach(ticket => {
+    let totalTickets = filteredTickets.length
+    filteredTickets.forEach(ticket => {
       const engineer = ticket.owner.name
       engineerData[engineer] = (engineerData[engineer] || 0) + 1
     })
@@ -220,7 +249,7 @@ export default function ManagerDashboard({ resolutions, tickets }) {
       }))
       .sort((a, b) => b.utilizationRate - a.utilizationRate)
       .slice(0, 10)
-  }, [tickets])
+  }, [filteredTickets])
 
   const rootCauseFrequency = useMemo(() => {
     const rootCauseData = {}
@@ -264,30 +293,44 @@ export default function ManagerDashboard({ resolutions, tickets }) {
       .slice(0, 10)
   }, [resolutions])
 
- 
-
   return (
     <Container maxWidth="lg">
       <Typography variant="h4" gutterBottom sx={{ my: 4, fontWeight: 'bold', color: theme.palette.primary.main }}>
         Manager Dashboard
       </Typography>
-      <Tabs 
-        value={tabValue} 
-        onChange={handleTabChange} 
-        centered 
-        sx={{ 
-          mb: 4,
-          '& .MuiTab-root': { 
-            fontWeight: 'bold',
-            fontSize: '1rem',
-          },
-        }}
-      >
-        <Tab icon={<TrendingUp />} label="Trend Analysis" />
-        <Tab icon={<Warning />} label="Severity Impact" />
-        <Tab icon={<Engineering />} label="Engineer Performance" />
-        <Tab icon={<BugReport />} label="Root Cause Analysis" />
-      </Tabs>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange}
+          sx={{ 
+            '& .MuiTab-root': { 
+              fontWeight: 'bold',
+              fontSize: '1rem',
+            },
+          }}
+        >
+          <Tab icon={<TrendingUp />} label="Trend Analysis" />
+          <Tab icon={<Warning />} label="Severity Impact" />
+          <Tab icon={<Engineering />} label="Engineer Performance" />
+          <Tab icon={<BugReport />} label="Root Cause Analysis" />
+        </Tabs>
+        <FormControl variant="outlined">
+          <InputLabel id="date-range-label">Date Range</InputLabel>
+          <StyledSelect
+            labelId="date-range-label"
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            label="Date Range"
+            startAdornment={<FilterList sx={{ color: 'action.active', mr: 1, my: 0.5 }} />}
+          >
+            <MenuItem value="all">All Time</MenuItem>
+            <MenuItem value="last-week">Last Week</MenuItem>
+            <MenuItem value="last-month">Last Month</MenuItem>
+            <MenuItem value="last-6-months">Last 6 Months</MenuItem>
+            <MenuItem value="last-year">Last Year</MenuItem>
+          </StyledSelect>
+        </FormControl>
+      </Box>
       <Box mt={3}>
         {tabValue === 0 && (
           <Grid container spacing={3}>
@@ -319,6 +362,7 @@ export default function ManagerDashboard({ resolutions, tickets }) {
                 <IconWrapper>
                   <Timeline />
                 </IconWrapper>
+                
                 <Typography variant="h6" gutterBottom>
                   Average Resolution Time Trend
                 </Typography>

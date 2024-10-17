@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
     Box, Typography, Grid, Paper, CircularProgress, List, ListItem, ListItemText,
-    ListItemAvatar, Avatar, Tabs, Tab, ThemeProvider, createTheme, CssBaseline, styled
+    ListItemAvatar, Avatar, Tabs, Tab, ThemeProvider, createTheme, CssBaseline, styled,
+    Select, MenuItem, FormControl, InputLabel
 } from '@mui/material'
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -12,6 +13,7 @@ import {
 import { Sunburst } from '@nivo/sunburst'
 import { motion } from 'framer-motion'
 import ForceGraph2D from 'react-force-graph-2d'
+import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
 
 const COLORS = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
@@ -45,6 +47,14 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
     '&:hover': {
         transform: 'translateY(-5px)',
         boxShadow: '0 15px 35px rgba(0, 0, 0, 0.15)',
+    },
+}))
+
+const StyledSelect = styled(Select)(({ theme }) => ({
+    minWidth: 200,
+    '& .MuiSelect-select': {
+        paddingTop: theme.spacing(1),
+        paddingBottom: theme.spacing(1),
     },
 }))
 
@@ -85,12 +95,27 @@ const CustomTooltip = ({ active, payload }) => {
 export default function EngineersDashboard({ tickets, resolutions }) {
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState(0)
+    const [dateRange, setDateRange] = useState('all')
 
     useEffect(() => {
         if (tickets && resolutions) {
             setLoading(false)
         }
     }, [tickets, resolutions])
+
+    const filteredTickets = useMemo(() => {
+        if (dateRange === 'all') return tickets
+
+        const now = new Date()
+        const filterDate = {
+            'last-week': subDays(now, 7),
+            'last-month': subMonths(now, 1),
+            'last-6-months': subMonths(now, 6),
+            'last-year': subYears(now, 1)
+        }[dateRange]
+
+        return tickets.filter(ticket => isAfter(parseISO(ticket.reportedOn), filterDate))
+    }, [tickets, dateRange])
 
     if (loading) {
         return (
@@ -100,9 +125,9 @@ export default function EngineersDashboard({ tickets, resolutions }) {
         )
     }
 
-    // Data processing functions
+    // Data processing functions (using filteredTickets instead of tickets)
     const processOnCallLeaderboard = () => {
-        const onCallCounts = tickets.reduce((acc, ticket) => {
+        const onCallCounts = filteredTickets.reduce((acc, ticket) => {
             const owner = ticket.owner.name
             acc[owner] = (acc[owner] || 0) + 1
             return acc
@@ -116,7 +141,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     const processParticipationNetwork = () => {
         const nodes = new Set()
         const links = []
-        tickets.forEach(ticket => {
+        filteredTickets.forEach(ticket => {
             const engineers = ticket.engagements.map(engagement => engagement.member.name)
             engineers.forEach((engineer, i) => {
                 nodes.add(engineer)
@@ -134,7 +159,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     }
 
     const processTopContributors = () => {
-        const contributorData = tickets.reduce((acc, ticket) => {
+        const contributorData = filteredTickets.reduce((acc, ticket) => {
             const addContribution = (user, role) => {
                 if (!acc[user]) acc[user] = { onCall: 0, participant: 0, solver: 0 }
                 acc[user][role]++
@@ -155,7 +180,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     }
 
     const processEfficiencyRadar = () => {
-        const userData = tickets.reduce((acc, ticket) => {
+        const userData = filteredTickets.reduce((acc, ticket) => {
             const user = ticket.owner.name
             if (!acc[user]) {
                 acc[user] = { name: user, solved: 0, avgSolutionTime: 0, onCall: 0, collaborations: 0 }
@@ -174,7 +199,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     }
 
     const processSolversEfficiencyScoreboard = () => {
-        const solverData = tickets.reduce((acc, ticket) => {
+        const solverData = filteredTickets.reduce((acc, ticket) => {
             if (ticket.resolvedOn) {
                 const solver = ticket.owner.name
                 if (!acc[solver]) {
@@ -193,7 +218,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     }
 
     const processProblemSolversTree = () => {
-        const solverData = tickets.reduce((acc, ticket) => {
+        const solverData = filteredTickets.reduce((acc, ticket) => {
             if (ticket.resolvedOn) {
                 const solver = ticket.owner.name
                 if (!acc[solver]) {
@@ -307,7 +332,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
                 <Legend />
                 <Scatter name="Solvers" data={processSolversEfficiencyScoreboard()} fill="#8884d8">
                     {processSolversEfficiencyScoreboard().map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`}   fill={COLORS[index % COLORS.length]} />
                     ))}
                 </Scatter>
             </ScatterChart>
@@ -339,7 +364,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Box sx={{ flexGrow: 1, p: 3, background:  theme.palette.background.default }}>
+            <Box sx={{ flexGrow: 1, p: 3, background: theme.palette.background.default }}>
                 <motion.div
                     initial={{ opacity: 0, y: -50 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -350,16 +375,37 @@ export default function EngineersDashboard({ tickets, resolutions }) {
                     </Typography>
                 </motion.div>
 
-                <Tabs
-                    value={activeTab}
-                    onChange={handleTabChange}
-                    centered
-                    sx={{ mb: 4 }}
-                >
-                    <Tab label="Overview" />
-                    <Tab label="Efficiency" />
-                    <Tab label="Problem Solving" />
-                </Tabs>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                    <Tabs
+                        value={activeTab}
+                        onChange={handleTabChange}
+                        sx={{
+                            '& .MuiTab-root': {
+                                fontWeight: 'bold',
+                                fontSize: '1rem',
+                            },
+                        }}
+                    >
+                        <Tab label="Overview" />
+                        <Tab label="Efficiency" />
+                        <Tab label="Problem Solving" />
+                    </Tabs>
+                    <FormControl variant="outlined">
+                        <InputLabel id="date-range-label">Date Range</InputLabel>
+                        <StyledSelect
+                            labelId="date-range-label"
+                            value={dateRange}
+                            onChange={(e) => setDateRange(e.target.value)}
+                            label="Date Range"
+                        >
+                            <MenuItem value="all">All Time</MenuItem>
+                            <MenuItem value="last-week">Last Week</MenuItem>
+                            <MenuItem value="last-month">Last Month</MenuItem>
+                            <MenuItem value="last-6-months">Last 6 Months</MenuItem>
+                            <MenuItem value="last-year">Last Year</MenuItem>
+                        </StyledSelect>
+                    </FormControl>
+                </Box>
 
                 {activeTab === 0 && (
                     <Grid container spacing={3}>

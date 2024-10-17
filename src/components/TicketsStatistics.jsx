@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box, Typography, Grid, Paper, CircularProgress, Tabs, Tab,
-  ThemeProvider, createTheme, CssBaseline, styled
+  ThemeProvider, createTheme, CssBaseline, styled, Select, MenuItem, FormControl, InputLabel
 } from '@mui/material'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, Line, LineChart, ScatterChart, Scatter
 } from 'recharts'
 import { motion } from 'framer-motion'
+import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
 
 const COLORS = ['#3366CC', '#DC3912', '#FF9900', '#109618', '#990099']
 
@@ -66,12 +67,25 @@ const AnimatedNumber = ({ value }) => {
 export default function TicketsDashboard({ tickets, resolutions }) {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(0)
+  const [dateRange, setDateRange] = useState('last-week')
 
   useEffect(() => {
     if (tickets && resolutions) {
       setLoading(false)
     }
   }, [tickets, resolutions])
+
+  const filteredTickets = useMemo(() => {
+    const now = new Date()
+    const filterDate = {
+      'last-week': subDays(now, 7),
+      'last-month': subMonths(now, 1),
+      'last-6-months': subMonths(now, 6),
+      'last-year': subYears(now, 1)
+    }[dateRange]
+
+    return tickets.filter(ticket => isAfter(parseISO(ticket.reportedOn), filterDate))
+  }, [tickets, dateRange])
 
   if (loading) {
     return (
@@ -81,22 +95,22 @@ export default function TicketsDashboard({ tickets, resolutions }) {
     )
   }
 
-  const severityData = tickets.reduce((acc, ticket) => {
+  const severityData = filteredTickets.reduce((acc, ticket) => {
     acc[ticket.severity] = (acc[ticket.severity] || 0) + 1
     return acc
   }, {})
 
-  const typeData = tickets.reduce((acc, ticket) => {
+  const typeData = filteredTickets.reduce((acc, ticket) => {
     acc[ticket.type] = (acc[ticket.type] || 0) + 1
     return acc
   }, {})
 
-  const statusData = tickets.reduce((acc, ticket) => {
+  const statusData = filteredTickets.reduce((acc, ticket) => {
     acc[ticket.ticketStatus] = (acc[ticket.ticketStatus] || 0) + 1
     return acc
   }, {})
 
-  const ticketTrendData = tickets.reduce((acc, ticket) => {
+  const ticketTrendData = filteredTickets.reduce((acc, ticket) => {
     const date = ticket.reportedOn.split('T')[0]
     if (!acc[date]) {
       acc[date] = { date, count: 0 }
@@ -105,7 +119,7 @@ export default function TicketsDashboard({ tickets, resolutions }) {
     return acc
   }, {})
 
-  const resolutionTimeData = tickets
+  const resolutionTimeData = filteredTickets
     .filter(ticket => ticket.resolvedOn)
     .map(ticket => {
       const openTime = new Date(ticket.reportedOn).getTime()
@@ -146,16 +160,31 @@ export default function TicketsDashboard({ tickets, resolutions }) {
           </Typography>
         </motion.div>
 
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          centered
-          sx={{ mb: 4 }}
-        >
-          <Tab label="Overview" />
-          <Tab label="Ticket Details" />
-          <Tab label="Trends" />
-        </Tabs>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            sx={{ flex: 1 }}
+          >
+            <Tab label="Overview" />
+            <Tab label="Ticket Details" />
+            <Tab label="Trends" />
+          </Tabs>
+          <FormControl sx={{ minWidth: 120 }}>
+            <InputLabel id="date-range-label">Date Range</InputLabel>
+            <Select
+              labelId="date-range-label"
+              value={dateRange}
+              label="Date Range"
+              onChange={(e) => setDateRange(e.target.value)}
+            >
+              <MenuItem value="last-week">Last Week</MenuItem>
+              <MenuItem value="last-month">Last Month</MenuItem>
+              <MenuItem value="last-6-months">Last 6 Months</MenuItem>
+              <MenuItem value="last-year">Last Year</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
 
         {activeTab === 0 && (
           <Grid container spacing={3}>

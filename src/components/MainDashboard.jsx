@@ -1,57 +1,68 @@
-import React, { useEffect, useState } from 'react';
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 import {
-  AppBar, Typography, Container, Grid, Paper, Table,
-  TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Chip, Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  Avatar, Box, ThemeProvider, createTheme, CssBaseline, Select, MenuItem, FormControl, InputLabel
-} from '@mui/material';
+  AppBar,
+  Typography,
+  Container,
+  Grid,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Avatar,
+  Box,
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from '@mui/material'
 import {
-  ResponsiveContainer, Tooltip, Legend, RadarChart, PolarGrid,
-  PolarAngleAxis, PolarRadiusAxis, Radar
-} from 'recharts';
-import {
-  Timeline, TimelineItem, TimelineSeparator, TimelineDot,
-  TimelineConnector, TimelineContent
-} from '@mui/lab';
-import { motion } from 'framer-motion';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
-import LabelIcon from '@mui/icons-material/Label';
-import BugReportIcon from '@mui/icons-material/BugReport';
-import NewReleasesIcon from '@mui/icons-material/NewReleases';
-import SpeedIcon from '@mui/icons-material/Speed';
-import SecurityIcon from '@mui/icons-material/Security';
-import DescriptionIcon from '@mui/icons-material/Description';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
-import DoneAllIcon from '@mui/icons-material/DoneAll';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import PropTypes from 'prop-types';
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+} from 'recharts'
+import { motion } from 'framer-motion'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ErrorIcon from '@mui/icons-material/Error'
+import BugReportIcon from '@mui/icons-material/BugReport'
+import NewReleasesIcon from '@mui/icons-material/NewReleases'
+import AssignmentIcon from '@mui/icons-material/Assignment'
+import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber'
+import DoneAllIcon from '@mui/icons-material/DoneAll'
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
 
 const priorityColors = {
   Low: '#4CAF50',
   Medium: '#FFC107',
   High: '#FF9800',
-  Critical: '#F44336'
-};
+  Highest: '#F44336',
+}
 
 const typeColors = {
-  Bug: '#FF5722',
-  'New Feature': '#2196F3',
-  Performance: '#9C27B0',
-  Security: '#F44336',
-  Documentation: '#607D8B',
-  Task: '#795548'
-};
+  BUG: '#FF5722',
+  FEATURE: '#2196F3',
+  SUPPORT: '#9C27B0',
+}
 
 const typeIcons = {
-  Bug: <BugReportIcon />,
-  'New Feature': <NewReleasesIcon />,
-  Performance: <SpeedIcon />,
-  Security: <SecurityIcon />,
-  Documentation: <DescriptionIcon />,
-  Task: <AssignmentIcon />
-};
+  BUG: <BugReportIcon />,
+  FEATURE: <NewReleasesIcon />,
+  SUPPORT: <AssignmentIcon />,
+}
 
 const theme = createTheme({
   palette: {
@@ -65,97 +76,104 @@ const theme = createTheme({
   typography: {
     fontFamily: 'Roboto, sans-serif',
   },
-});
+})
 
-const StyledPaper = motion(Paper);
+const StyledPaper = motion(Paper)
 
-const AnimatedTypography = motion(Typography);
+const AnimatedTypography = motion(Typography)
 
 const AnimatedNumber = ({ value }) => {
-  const [displayValue, setDisplayValue] = useState(0);
+  const [displayValue, setDisplayValue] = useState(0)
 
   useEffect(() => {
-    let start = 0;
-    const end = parseInt(value);
-    const duration = 2000;
+    if (value === 0) {
+      setDisplayValue(0)
+      return
+    }
+
+    let start = 0
+    const end = parseInt(value)
+    const duration = 2000
     let timer = setInterval(() => {
-      start += 1;
-      setDisplayValue(start);
-      if (start === end) clearInterval(timer);
-    }, duration / end);
+      start += 1
+      setDisplayValue(start)
+      if (start === end) clearInterval(timer)
+    }, duration / end)
 
-    return () => clearInterval(timer);
-  }, [value]);
+    return () => clearInterval(timer)
+  }, [value])
 
-  return <span>{displayValue}</span>;
-};
+  return <span>{displayValue}</span>
+}
 
-export default function MainDashboard({ ticketData }) {
-  const [selectedTicket, setSelectedTicket] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [timeRange, setTimeRange] = useState('all');
-  const [filteredTickets, setFilteredTickets] = useState(ticketData);
+export default function MainDashboard({ tickets, resolutions }) {
+  const [timeRange, setTimeRange] = useState('all')
+  const [filteredTickets, setFilteredTickets] = useState(tickets)
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const now = new Date();
-    const filtered = ticketData.filter(ticket => {
-      const ticketDate = new Date(ticket.dateOpened);
+    const now = new Date()
+    const filtered = tickets.filter((ticket) => {
+      const ticketDate = new Date(ticket.reportedOn)
       switch (timeRange) {
         case 'week':
-          return now - ticketDate <= 7 * 24 * 60 * 60 * 1000;
+          return now - ticketDate <= 7 * 24 * 60 * 60 * 1000
         case 'month':
-          return now - ticketDate <= 30 * 24 * 60 * 60 * 1000;
+          return now - ticketDate <= 30 * 24 * 60 * 60 * 1000
         case '6months':
-          return now - ticketDate <= 180 * 24 * 60 * 60 * 1000;
+          return now - ticketDate <= 180 * 24 * 60 * 60 * 1000
         case 'year':
-          return now - ticketDate <= 365 * 24 * 60 * 60 * 1000;
+          return now - ticketDate <= 365 * 24 * 60 * 60 * 1000
         default:
-          return true;
+          return true
       }
-    });
-    setFilteredTickets(filtered);
-  }, [timeRange, ticketData]);
+    })
+    setFilteredTickets(filtered)
+  }, [timeRange, tickets])
 
-  const totalTickets = filteredTickets.length;
-  const solvedTickets = filteredTickets.filter(ticket => ticket.isSolved).length;
-  const openTickets = totalTickets - solvedTickets;
-
-  
+  const totalTickets = filteredTickets.length
+  const solvedTickets = filteredTickets.filter((ticket) => ticket.resolvedOn).length
+  const openTickets = totalTickets - solvedTickets
 
   const engineerPerformanceData = filteredTickets.reduce((acc, ticket) => {
-    ticket.engagedEngineers.forEach(engineer => {
-      if (!acc[engineer]) {
-        acc[engineer] = { name: engineer, solved: 0, open: 0, total: 0 };
-      }
-      acc[engineer].total += 1;
-      if (ticket.isSolved) {
-        acc[engineer].solved += 1;
-      } else {
-        acc[engineer].open += 1;
-      }
-    });
-    return acc;
-  }, {});
+    const owner = ticket.owner.name
+    if (!acc[owner]) {
+      acc[owner] = { name: owner, solved: 0, open: 0, total: 0 }
+    }
+    acc[owner].total += 1
+    if (ticket.resolvedOn) {
+      acc[owner].solved += 1
+    } else {
+      acc[owner].open += 1
+    }
+    return acc
+  }, {})
 
   const topEngineers = Object.values(engineerPerformanceData)
     .sort((a, b) => b.total - a.total)
-    .slice(0, 5);
+    .slice(0, 5)
 
-  const handleTicketClick = (ticket) => {
-    setSelectedTicket(ticket);
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
+    const handleRowClick = (ticketId) => {
+      // Find the selected ticket based on the ticketId
+      const selectedTicket = tickets.find(ticket => ticket.id === ticketId);
+    
+      // Filter the resolutions where the tickets array contains the ticketId
+      const ticketResolutions = resolutions.filter(resolution => 
+        resolution.tickets.some(ticket => ticket.id === ticketId)
+      );
+    
+     
+    
+      // Navigate to the ticket-flow page and pass the selected ticket and its resolutions
+      navigate('/ticket-flow', { state: { selectedTicket, ticketResolutions } });
+    };
+    
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ flexGrow: 1, bgcolor: 'background.default' }}>
-        <AppBar position="static">
-        </AppBar>
+        <AppBar position="static"></AppBar>
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -273,18 +291,18 @@ export default function MainDashboard({ ticketData }) {
                     <TableBody>
                       {filteredTickets.map((ticket) => (
                         <TableRow
-                          key={ticket.ticketId}
-                          onClick={() => handleTicketClick(ticket)}
+                          key={ticket.id}
+                          onClick={() => handleRowClick(ticket.id)}
                           style={{ cursor: 'pointer' }}
                           hover
                         >
-                          <TableCell>{ticket.ticketId}</TableCell>
-                          <TableCell>{ticket.issue}</TableCell>
+                          <TableCell>{ticket.id}</TableCell>
+                          <TableCell>{ticket.title}</TableCell>
                           <TableCell>
                             <Chip
                               label={ticket.severity}
                               style={{
-                                backgroundColor: priorityColors[ticket.severity],
+                                backgroundColor: priorityColors[ticket.priority],
                                 color: 'white',
                                 fontWeight: 'bold'
                               }}
@@ -297,13 +315,13 @@ export default function MainDashboard({ ticketData }) {
                               style={{ backgroundColor: typeColors[ticket.type], color: 'white' }}
                             />
                           </TableCell>
-                          <TableCell>{ticket.onCall}</TableCell>
-                          <TableCell>{ticket.dateOpened}</TableCell>
+                          <TableCell>{ticket.owner.name}</TableCell>
+                          <TableCell>{new Date(ticket.reportedOn).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <Chip
-                              icon={ticket.isSolved ? <CheckCircleIcon /> : <ErrorIcon />}
-                              label={ticket.isSolved ? "Solved" : "Open"}
-                              color={ticket.isSolved ? "success" : "error"}
+                              icon={ticket.resolvedOn ? <CheckCircleIcon /> : <ErrorIcon />}
+                              label={ticket.resolvedOn ? "Solved" : "Open"}
+                              color={ticket.resolvedOn ? "success" : "error"}
                             />
                           </TableCell>
                         </TableRow>
@@ -315,108 +333,7 @@ export default function MainDashboard({ ticketData }) {
             </Grid>
           </Grid>
         </Container>
-
-        {/* Ticket Detail Dialog */}
-        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-          <DialogTitle>
-            <Typography variant="h5" component="div" style={{ color: theme.palette.primary.main, fontWeight: 'bold' }}>
-              Ticket Details
-            </Typography>
-          </DialogTitle>
-          <DialogContent dividers>
-            {selectedTicket && (
-              <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
-                <Typography variant="h5" gutterBottom style={{ color: theme.palette.secondary.main, fontWeight: 'bold' }}>
-                  {selectedTicket.issue}
-                </Typography>
-
-                {/* Ticket Status and Severity */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                  <Chip
-                    label={selectedTicket.isSolved ? "Solved" : "Open"}
-                    color={selectedTicket.isSolved ? "success" : "error"}
-                    icon={selectedTicket.isSolved ? <CheckCircleIcon /> : <ErrorIcon />}
-                  />
-                  <Chip
-                    label={selectedTicket.severity}
-                    style={{ backgroundColor: priorityColors[selectedTicket.severity], color: 'white' }}
-                  />
-                </Box>
-
-                {/* Ticket Timeline */}
-                <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>Timeline</Typography>
-                <Timeline align="alternate">
-                  <TimelineItem>
-                    <TimelineSeparator>
-                      <TimelineDot color="primary" />
-                      <TimelineConnector />
-                    </TimelineSeparator>
-                    <TimelineContent>Opened: {new Date(selectedTicket.dateOpened).toLocaleString()}</TimelineContent>
-                  </TimelineItem>
-                  {selectedTicket.firstTouch && (
-                    <TimelineItem>
-                      <TimelineSeparator>
-                        <TimelineDot color="secondary" />
-                        <TimelineConnector />
-                      </TimelineSeparator>
-                      <TimelineContent>First Touch: {new Date(selectedTicket.firstTouch).toLocaleString()}</TimelineContent>
-                    </TimelineItem>
-                  )}
-                  {selectedTicket.resolutionTime && (
-                    <TimelineItem>
-                      <TimelineSeparator>
-                        <TimelineDot color="success" />
-                      </TimelineSeparator>
-                      <TimelineContent>Resolved: {new Date(selectedTicket.resolutionTime).toLocaleString()}</TimelineContent>
-                    </TimelineItem>
-                  )}
-                </Timeline>
-
-                {/* Engaged Engineers */}
-                <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>Engaged Engineers</Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
-                  {selectedTicket.engagedEngineers.map((engineer, index) => (
-                    <Chip
-                      key={index}
-                      avatar={<Avatar>{engineer[0]}</Avatar>}
-                      label={engineer}
-                      variant="outlined"
-                      color="primary"
-                    />
-                  ))}
-                </Box>
-
-                {/* Root Cause */}
-                <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>Root Cause</Typography>
-                <Typography variant="body1" paragraph>
-                  {selectedTicket.rootCause || 'Not identified yet'}
-                </Typography>
-
-                {/* Tags */}
-                <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>Tags</Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {selectedTicket.tags.map((tag, index) => (
-                    <Chip
-                      key={index}
-                      label={tag}
-                      icon={<LabelIcon />}
-                      variant="outlined"
-                      color="secondary"
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog} color="primary">Close</Button>
-          </DialogActions>
-        </Dialog>
       </Box>
     </ThemeProvider>
-  );
+  )
 }
-
-MainDashboard.propTypes = {
-  ticketData: PropTypes.array.isRequired
-};

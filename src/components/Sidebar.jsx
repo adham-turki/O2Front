@@ -56,7 +56,6 @@ const dashboards = [
   { name: 'Engineers Dashboard', icon: <EngineeringIcon />, path: '/engineers-dashboard' },
   { name: 'Manager Dashboard', icon: <BusinessIcon />, path: '/manager-dashboard' },
   { name: 'Custom Dashboard', icon: <BarChartIcon />, path: '/custom-dashboard' },
-  { name: 'Ticket Workflow', icon: <AssignmentIcon />, path: '/ticket-flow' },
   { name: 'Customer Dashboard', icon: <PersonIcon />, path: '/customer-dashboard' },
   {name: 'Tickets Funnel', icon: <FilterAltIcon />, path: '/tickets-funnel' },
   {name: 'Advanced Tickets Funnel', icon: <FilterAltIcon />, path: '/advanced-tickets-funnel' },

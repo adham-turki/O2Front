@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react';
+'use client'
+
+import { useState, useEffect } from 'react'
 import {
   Box, Typography, Grid, Paper, CircularProgress, Tabs, Tab,
   ThemeProvider, createTheme, CssBaseline, styled
-} from '@mui/material';
+} from '@mui/material'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, Line, LineChart, ScatterChart, Scatter
-} from 'recharts';
-import { motion } from 'framer-motion';
-import PropTypes from 'prop-types';
+} from 'recharts'
+import { motion } from 'framer-motion'
 
-const COLORS = ['#3366CC', '#DC3912', '#FF9900', '#109618', '#990099'];
+const COLORS = ['#3366CC', '#DC3912', '#FF9900', '#109618', '#990099']
 
 const lightTheme = createTheme({
   palette: {
@@ -29,7 +30,7 @@ const lightTheme = createTheme({
   typography: {
     fontFamily: 'Roboto, sans-serif',
   },
-});
+})
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -41,113 +42,95 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
     transform: 'translateY(-5px)',
     boxShadow: '0 6px 25px rgba(0, 0, 0, 0.15)',
   },
-}));
+}))
 
 const AnimatedNumber = ({ value }) => {
-  const [displayValue, setDisplayValue] = useState(0);
+  const [displayValue, setDisplayValue] = useState(0)
 
   useEffect(() => {
-    let start = 0;
-    const end = parseInt(value);
-    const duration = 2000;
+    let start = 0
+    const end = parseInt(value)
+    const duration = 2000
     let timer = setInterval(() => {
-      start += 1;
-      setDisplayValue(start);
-      if (start === end) clearInterval(timer);
-    }, duration / end);
+      start += 1
+      setDisplayValue(start)
+      if (start === end) clearInterval(timer)
+    }, duration / end)
 
-    return () => clearInterval(timer);
-  }, [value]);
+    return () => clearInterval(timer)
+  }, [value])
 
-  return <span>{displayValue}</span>;
-};
+  return <span>{displayValue}</span>
+}
 
-export default function TicketsDashboard() {
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(0);
+export default function TicketsDashboard({ tickets, resolutions }) {
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState(0)
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/data.json');
-        const data = await response.json();
-        setTickets(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching ticket data:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+    if (tickets && resolutions) {
+      setLoading(false)
+    }
+  }, [tickets, resolutions])
 
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
         <CircularProgress />
       </Box>
-    );
+    )
   }
 
   const severityData = tickets.reduce((acc, ticket) => {
-    acc[ticket.severity] = (acc[ticket.severity] || 0) + 1;
-    return acc;
-  }, {});
+    acc[ticket.severity] = (acc[ticket.severity] || 0) + 1
+    return acc
+  }, {})
 
   const typeData = tickets.reduce((acc, ticket) => {
-    acc[ticket.type] = (acc[ticket.type] || 0) + 1;
-    return acc;
-  }, {});
+    acc[ticket.type] = (acc[ticket.type] || 0) + 1
+    return acc
+  }, {})
 
   const statusData = tickets.reduce((acc, ticket) => {
-    acc[ticket.currentStatus] = (acc[ticket.currentStatus] || 0) + 1;
-    return acc;
-  }, {});
+    acc[ticket.ticketStatus] = (acc[ticket.ticketStatus] || 0) + 1
+    return acc
+  }, {})
 
   const ticketTrendData = tickets.reduce((acc, ticket) => {
-    const date = ticket.dateOpened.split('T')[0];
+    const date = ticket.reportedOn.split('T')[0]
     if (!acc[date]) {
-      acc[date] = { date, count: 0 };
+      acc[date] = { date, count: 0 }
     }
-    acc[date].count++;
-    return acc;
-  }, {});
+    acc[date].count++
+    return acc
+  }, {})
 
   const resolutionTimeData = tickets
-    .filter(ticket => ticket.resolutionTime)
+    .filter(ticket => ticket.resolvedOn)
     .map(ticket => {
-      const openTime = new Date(ticket.dateOpened).getTime();
-      const solveTime = new Date(ticket.resolutionTime).getTime();
-      const resolutionTime = (solveTime - openTime) / (1000 * 60 * 60);
-      return { id: ticket.ticketId, resolutionTime, issue: ticket.issue };
-    });
+      const openTime = new Date(ticket.reportedOn).getTime()
+      const solveTime = new Date(ticket.resolvedOn).getTime()
+      const resolutionTime = (solveTime - openTime) / (1000 * 60 * 60)
+      return { id: ticket.id, resolutionTime, title: ticket.title }
+    })
 
   const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
-  // Custom tooltip component for ScatterChart
+    setActiveTab(newValue)
+  }
+
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
+      const data = payload[0].payload
       return (
         <Paper sx={{ padding: 2, background: '#ffffff' }}>
           <Typography variant="h6">Ticket #{data.id}</Typography>
-          <Typography variant="body2">Issue: {data.issue}</Typography>
+          <Typography variant="body2">Title: {data.title}</Typography>
           <Typography variant="body2">Resolution Time: {data.resolutionTime.toFixed(2)} hours</Typography>
         </Paper>
-      );
+      )
     }
-
-    return null;
-  };
-  //props validation for CustomTooltip
-  CustomTooltip.propTypes = {
-    active: PropTypes.bool,
-    payload: PropTypes.array,
-  };
-
+    return null
+  }
 
   return (
     <ThemeProvider theme={lightTheme}>
@@ -290,9 +273,7 @@ export default function TicketsDashboard() {
             </Grid>
           </Grid>
         )}
-
-        
       </Box>
     </ThemeProvider>
-  );
+  )
 }

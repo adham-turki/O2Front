@@ -1,22 +1,22 @@
-import { useState, useEffect } from 'react';
+'use client'
+
+import { useState, useEffect } from 'react'
 import {
     Box, Typography, Grid, Paper, CircularProgress, List, ListItem, ListItemText,
     ListItemAvatar, Avatar, Tabs, Tab, ThemeProvider, createTheme, CssBaseline, styled
-} from '@mui/material';
+} from '@mui/material'
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     Cell, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
-} from 'recharts';
-import { Sunburst } from '@nivo/sunburst';
-import { motion } from 'framer-motion';
-import ForceGraph2D from 'react-force-graph-2d';
-import PropTypes from 'prop-types';
-
+} from 'recharts'
+import { Sunburst } from '@nivo/sunburst'
+import { motion } from 'framer-motion'
+import ForceGraph2D from 'react-force-graph-2d'
 
 const COLORS = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
     '#F3A683', '#F7D794', '#778BEB', '#786FA6', '#F8A5C2'
-];
+]
 
 const theme = createTheme({
     palette: {
@@ -34,7 +34,7 @@ const theme = createTheme({
     typography: {
         fontFamily: 'Poppins, sans-serif',
     },
-});
+})
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(3),
@@ -46,30 +46,30 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
         transform: 'translateY(-5px)',
         boxShadow: '0 15px 35px rgba(0, 0, 0, 0.15)',
     },
-}));
+}))
 
 const AnimatedNumber = ({ value }) => {
-    const [displayValue, setDisplayValue] = useState(0);
+    const [displayValue, setDisplayValue] = useState(0)
 
     useEffect(() => {
-        let start = 0;
-        const end = parseInt(value);
-        const duration = 2000;
+        let start = 0
+        const end = parseInt(value)
+        const duration = 2000
         let timer = setInterval(() => {
-            start += 1;
-            setDisplayValue(start);
-            if (start === end) clearInterval(timer);
-        }, duration / end);
+            start += 1
+            setDisplayValue(start)
+            if (start === end) clearInterval(timer)
+        }, duration / end)
 
-        return () => clearInterval(timer);
-    }, [value]);
+        return () => clearInterval(timer)
+    }, [value])
 
-    return <span>{displayValue}</span>;
-};
+    return <span>{displayValue}</span>
+}
 
 const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
-        const data = payload[0].payload;
+        const data = payload[0].payload
         return (
             <div style={{ backgroundColor: '#fff', padding: '10px', border: '1px solid #ccc' }}>
                 <p><strong>{data.name}</strong></p>
@@ -77,150 +77,135 @@ const CustomTooltip = ({ active, payload }) => {
                 <p>Avg Severity: {data.avgSeverity.toFixed(2)}</p>
                 <p>Total Tickets: {data.totalTickets}</p>
             </div>
-        );
+        )
     }
-    return null;
-};
-// probs validation for the CustomTooltip
-CustomTooltip.propTypes = {
-    active: PropTypes.bool,
-    payload: PropTypes.array,
-};
+    return null
+}
 
-
-export default function EngineersDashboard() {
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState(0);
+export default function EngineersDashboard({ tickets, resolutions }) {
+    const [loading, setLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState(0)
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await fetch('/data.json');
-                const data = await response.json();
-                setTickets(data);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching ticket data:", error);
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
+        if (tickets && resolutions) {
+            setLoading(false)
+        }
+    }, [tickets, resolutions])
 
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
                 <CircularProgress />
             </Box>
-        );
+        )
     }
 
     // Data processing functions
     const processOnCallLeaderboard = () => {
         const onCallCounts = tickets.reduce((acc, ticket) => {
-            acc[ticket.onCall] = (acc[ticket.onCall] || 0) + 1;
-            return acc;
-        }, {});
+            const owner = ticket.owner.name
+            acc[owner] = (acc[owner] || 0) + 1
+            return acc
+        }, {})
         return Object.entries(onCallCounts)
             .map(([name, count]) => ({ name, count }))
             .sort((a, b) => b.count - a.count)
-            .slice(0, 5);
-    };
+            .slice(0, 5)
+    }
 
     const processParticipationNetwork = () => {
-        const nodes = new Set();
-        const links = [];
+        const nodes = new Set()
+        const links = []
         tickets.forEach(ticket => {
-            ticket.engagedEngineers.forEach((engineer, i) => {
-                nodes.add(engineer);
-                ticket.engagedEngineers.forEach((otherEngineer, j) => {
+            const engineers = ticket.engagements.map(engagement => engagement.member.name)
+            engineers.forEach((engineer, i) => {
+                nodes.add(engineer)
+                engineers.forEach((otherEngineer, j) => {
                     if (i !== j) {
-                        links.push({ source: engineer, target: otherEngineer });
+                        links.push({ source: engineer, target: otherEngineer })
                     }
-                });
-            });
-        });
+                })
+            })
+        })
         return {
             nodes: Array.from(nodes).map(id => ({ id })),
             links
-        };
-    };
+        }
+    }
 
     const processTopContributors = () => {
         const contributorData = tickets.reduce((acc, ticket) => {
             const addContribution = (user, role) => {
-                if (!acc[user]) acc[user] = { onCall: 0, participant: 0, solver: 0 };
-                acc[user][role]++;
-            };
+                if (!acc[user]) acc[user] = { onCall: 0, participant: 0, solver: 0 }
+                acc[user][role]++
+            }
 
-            addContribution(ticket.onCall, 'onCall');
-            ticket.engagedEngineers.forEach(engineer => addContribution(engineer, 'participant'));
-            if (ticket.isSolved) addContribution(ticket.onCall, 'solver');
+            addContribution(ticket.owner.name, 'onCall')
+            ticket.engagements.forEach(engagement => addContribution(engagement.member.name, 'participant'))
+            if (ticket.resolvedOn) addContribution(ticket.owner.name, 'solver')
 
-            return acc;
-        }, {});
+            return acc
+        }, {})
 
         return Object.entries(contributorData).map(([name, roles]) => ({
             name,
             ...roles,
             total: roles.onCall + roles.participant + roles.solver
-        })).sort((a, b) => b.total - a.total).slice(0, 10);
-    };
+        })).sort((a, b) => b.total - a.total).slice(0, 10)
+    }
 
     const processEfficiencyRadar = () => {
         const userData = tickets.reduce((acc, ticket) => {
-            const user = ticket.onCall;
+            const user = ticket.owner.name
             if (!acc[user]) {
-                acc[user] = { name: user, solved: 0, avgSolutionTime: 0, onCall: 0, collaborations: 0 };
+                acc[user] = { name: user, solved: 0, avgSolutionTime: 0, onCall: 0, collaborations: 0 }
             }
-            acc[user].onCall++;
-            acc[user].collaborations += ticket.engagedEngineers.length;
-            if (ticket.isSolved) {
-                acc[user].solved++;
-                const solutionTime = (new Date(ticket.resolutionTime) - new Date(ticket.dateOpened)) / (1000 * 60 * 60);
-                acc[user].avgSolutionTime = (acc[user].avgSolutionTime * (acc[user].solved - 1) + solutionTime) / acc[user].solved;
+            acc[user].onCall++
+            acc[user].collaborations += ticket.engagements.length
+            if (ticket.resolvedOn) {
+                acc[user].solved++
+                const solutionTime = (new Date(ticket.resolvedOn) - new Date(ticket.reportedOn)) / (1000 * 60 * 60)
+                acc[user].avgSolutionTime = (acc[user].avgSolutionTime * (acc[user].solved - 1) + solutionTime) / acc[user].solved
             }
-            return acc;
-        }, {});
+            return acc
+        }, {})
 
-        return Object.values(userData);
-    };
+        return Object.values(userData)
+    }
 
     const processSolversEfficiencyScoreboard = () => {
         const solverData = tickets.reduce((acc, ticket) => {
-            if (ticket.isSolved) {
-                const solver = ticket.onCall;
+            if (ticket.resolvedOn) {
+                const solver = ticket.owner.name
                 if (!acc[solver]) {
-                    acc[solver] = { name: solver, avgSolutionTime: 0, avgSeverity: 0, totalTickets: 0 };
+                    acc[solver] = { name: solver, avgSolutionTime: 0, avgSeverity: 0, totalTickets: 0 }
                 }
-                const solutionTime = (new Date(ticket.resolutionTime) - new Date(ticket.dateOpened)) / (1000 * 60 * 60);
-                const severityValue = { Low: 1, Medium: 2, High: 3, Critical: 4 }[ticket.severity];
-                acc[solver].avgSolutionTime = (acc[solver].avgSolutionTime * acc[solver].totalTickets + solutionTime) / (acc[solver].totalTickets + 1);
-                acc[solver].avgSeverity = (acc[solver].avgSeverity * acc[solver].totalTickets + severityValue) / (acc[solver].totalTickets + 1);
-                acc[solver].totalTickets++;
+                const solutionTime = (new Date(ticket.resolvedOn) - new Date(ticket.reportedOn)) / (1000 * 60 * 60)
+                const severityValue = { SEV0: 4, SEV1: 3, SEV2: 2, SEV3: 1 }[ticket.severity]
+                acc[solver].avgSolutionTime = (acc[solver].avgSolutionTime * acc[solver].totalTickets + solutionTime) / (acc[solver].totalTickets + 1)
+                acc[solver].avgSeverity = (acc[solver].avgSeverity * acc[solver].totalTickets + severityValue) / (acc[solver].totalTickets + 1)
+                acc[solver].totalTickets++
             }
-            return acc;
-        }, {});
+            return acc
+        }, {})
 
-        return Object.values(solverData);
-    };
+        return Object.values(solverData)
+    }
 
     const processProblemSolversTree = () => {
         const solverData = tickets.reduce((acc, ticket) => {
-            if (ticket.isSolved) {
-                const solver = ticket.onCall;
+            if (ticket.resolvedOn) {
+                const solver = ticket.owner.name
                 if (!acc[solver]) {
-                    acc[solver] = { name: solver, children: {} };
+                    acc[solver] = { name: solver, children: {} }
                 }
                 if (!acc[solver].children[ticket.type]) {
-                    acc[solver].children[ticket.type] = { name: ticket.type, value: 0 };
+                    acc[solver].children[ticket.type] = { name: ticket.type, value: 0 }
                 }
-                acc[solver].children[ticket.type].value++;
+                acc[solver].children[ticket.type].value++
             }
-            return acc;
-        }, {});
+            return acc
+        }, {})
 
         return {
             name: 'Problem Solvers',
@@ -228,8 +213,8 @@ export default function EngineersDashboard() {
                 name: solver.name,
                 children: Object.values(solver.children)
             }))
-        };
-    };
+        }
+    }
 
     // Render functions for each chart
     const renderOnCallLeaderboard = () => (
@@ -250,28 +235,28 @@ export default function EngineersDashboard() {
                 </ListItem>
             ))}
         </List>
-    );
+    )
 
     const renderParticipationNetwork = () => {
-        const graphData = processParticipationNetwork();
+        const graphData = processParticipationNetwork()
         return (
             <ForceGraph2D
                 graphData={graphData}
                 nodeAutoColorBy="id"
                 nodeCanvasObject={(node, ctx, globalScale) => {
-                    const label = node.id;
-                    const fontSize = 12 / globalScale;
-                    ctx.font = `${fontSize}px Sans-Serif`;
-                    const textWidth = ctx.measureText(label).width;
-                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
+                    const label = node.id
+                    const fontSize = 12 / globalScale
+                    ctx.font = `${fontSize}px Sans-Serif`
+                    const textWidth = ctx.measureText(label).width
+                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2)
 
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, ...bckgDimensions);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, ...bckgDimensions)
 
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = node.color;
-                    ctx.fillText(label, node.x, node.y);
+                    ctx.textAlign = 'center'
+                    ctx.textBaseline = 'middle'
+                    ctx.fillStyle = node.color
+                    ctx.fillText(label, node.x, node.y)
                 }}
                 nodeRelSize={5}
                 linkDirectionalParticles={2}
@@ -279,8 +264,8 @@ export default function EngineersDashboard() {
                 width={600}
                 height={400}
             />
-        );
-    };
+        )
+    }
 
     const renderTopContributors = () => (
         <ResponsiveContainer width="100%" height={400}>
@@ -295,7 +280,7 @@ export default function EngineersDashboard() {
                 <Bar dataKey="solver" stackId="a" fill={COLORS[2]} />
             </BarChart>
         </ResponsiveContainer>
-    );
+    )
 
     const renderEfficiencyRadar = () => (
         <ResponsiveContainer width="100%" height={400}>
@@ -310,7 +295,7 @@ export default function EngineersDashboard() {
                 <Legend />
             </RadarChart>
         </ResponsiveContainer>
-    );
+    )
 
     const renderSolversEfficiencyScoreboard = () => (
         <ResponsiveContainer width="100%" height={400}>
@@ -327,7 +312,7 @@ export default function EngineersDashboard() {
                 </Scatter>
             </ScatterChart>
         </ResponsiveContainer>
-    );
+    )
 
     const renderProblemSolversTree = () => (
         <ResponsiveContainer width="100%" height={400}>
@@ -345,16 +330,16 @@ export default function EngineersDashboard() {
                 arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 1.4]] }}
             />
         </ResponsiveContainer>
-    );
+    )
 
     const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
-    };
+        setActiveTab(newValue)
+    }
 
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Box sx={{ flexGrow: 1, p: 3, background: theme.palette.background.default }}>
+            <Box sx={{ flexGrow: 1, p: 3, background:  theme.palette.background.default }}>
                 <motion.div
                     initial={{ opacity: 0, y: -50 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -440,5 +425,5 @@ export default function EngineersDashboard() {
                 )}
             </Box>
         </ThemeProvider>
-    );
+    )
 }

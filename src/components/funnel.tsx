@@ -2,91 +2,106 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AlertCircle, CheckCircle, Clock, User, Tag, Calendar } from 'lucide-react'
+import { AlertCircle, CheckCircle, Clock, User, Tag, Calendar, Layers, Hash, MessageSquare } from 'lucide-react'
 
 interface Ticket {
-  ticketId: number
-  platform: string
-  issue: string
-  category: string
-  customer: string
-  engagedTier: number
-  severity: string
-  currentStatus: string
-  impact: string
+  id: number
   type: string
-  dateOpened: string
-  dateClosed: string | null
-  affectedServices: string[]
-  engagedEngineers: string[]
+  title: string
+  ticketStatus: string
+  severity: string
+  reportedOn: string
+  resolvedOn: string | null
+  priority: string
+  tiers: string
+  domains: { id: number; name: string }[]
+  tags: { id: number; label: string }[]
+  engagements: {
+    id: number
+    action: string
+    engagedOn: string
+    member: { id: number; name: string }
+  }[]
+  owner: { id: number; name: string }
+}
+
+interface Resolution {
+  id: number
+  solution: string
+  rootCause: string
 }
 
 interface TreeNode {
   name: string
-  type: 'root' | 'tier' | 'platform' | 'customer' | 'severity'
+  type: 'root' | 'tier' | 'domain' | 'severity' | 'status'
   children?: TreeNode[]
   tickets?: Ticket[]
   value: number
 }
 
+interface ComponentProps {
+  tickets: Ticket[]
+  resolutions: Resolution[]
+}
+
 const groupTickets = (tickets: Ticket[]): TreeNode => {
   const root: TreeNode = { name: 'All Tickets', type: 'root', children: [], value: tickets.length }
 
-  const tiers: { [key: number]: TreeNode } = {}
-  const platforms: { [key: string]: TreeNode } = {}
-  const customers: { [key: string]: TreeNode } = {}
+  const tiers: { [key: string]: TreeNode } = {}
+  const domains: { [key: string]: TreeNode } = {}
   const severities: { [key: string]: TreeNode } = {}
+  const statuses: { [key: string]: TreeNode } = {}
 
   tickets.forEach((ticket) => {
-    
     // Tier level
-    if (!tiers[ticket.engagedTier]) {
-      tiers[ticket.engagedTier] = { name: `Tier ${ticket.engagedTier}`, type: 'tier', children: [], value: 0 }
-      root.children!.push(tiers[ticket.engagedTier])
+    if (!tiers[ticket.tiers]) {
+      tiers[ticket.tiers] = { name: ticket.tiers, type: 'tier', children: [], value: 0 }
+      root.children!.push(tiers[ticket.tiers])
     }
-    tiers[ticket.engagedTier].value++
+    tiers[ticket.tiers].value++
 
-    // Platform level
-    const tierKey = `${ticket.engagedTier}-${ticket.platform}`
-    if (!platforms[tierKey]) {
-      platforms[tierKey] = { name: ticket.platform, type: 'platform', children: [], value: 0 }
-      tiers[ticket.engagedTier].children!.push(platforms[tierKey])
-    }
-    platforms[tierKey].value++
+    // Domain level
+    ticket.domains.forEach(domain => {
+      const domainKey = `${ticket.tiers}-${domain.name}`
+      if (!domains[domainKey]) {
+        domains[domainKey] = { name: domain.name, type: 'domain', children: [], value: 0 }
+        tiers[ticket.tiers].children!.push(domains[domainKey])
+      }
+      domains[domainKey].value++
 
-    // Customer level
-    const platformKey = `${tierKey}-${ticket.customer}`
-    if (!customers[platformKey]) {
-      customers[platformKey] = { name: ticket.customer, type: 'customer', children: [], value: 0 }
-      platforms[tierKey].children!.push(customers[platformKey])
-    }
-    customers[platformKey].value++
+      // Severity level
+      const severityKey = `${domainKey}-${ticket.severity}`
+      if (!severities[severityKey]) {
+        severities[severityKey] = { name: ticket.severity, type: 'severity', children: [], value: 0 }
+        domains[domainKey].children!.push(severities[severityKey])
+      }
+      severities[severityKey].value++
 
-    // Severity level
-    const customerKey = `${platformKey}-${ticket.severity}`
-    if (!severities[customerKey]) {
-      severities[customerKey] = { name: ticket.severity, type: 'severity', tickets: [], value: 0 }
-      customers[platformKey].children!.push(severities[customerKey])
-    }
-    severities[customerKey].tickets!.push(ticket)
-    severities[customerKey].value++
+      // Status level
+      const statusKey = `${severityKey}-${ticket.ticketStatus}`
+      if (!statuses[statusKey]) {
+        statuses[statusKey] = { name: ticket.ticketStatus, type: 'status', tickets: [], value: 0 }
+        severities[severityKey].children!.push(statuses[statusKey])
+      }
+      statuses[statusKey].tickets!.push(ticket)
+      statuses[statusKey].value++
+    })
   })
-   
 
   return root
 }
 
 const FunnelLevel = ({ node, depth, onSelect }: { node: TreeNode; depth: number; onSelect: () => void }) => {
-  const maxWidth = 100 - depth * 20 // Decrease max width by 20% for each level
-  const width = `${Math.max(maxWidth, 20)}%` // Ensure a minimum width of 40%
+  const maxWidth = 100 - depth * 20
+  const width = `${Math.max(maxWidth, 20)}%`
   const hue = 200 + depth * 30
 
   return (
     <motion.div
-      className="cursor-pointer rounded-lg p-4 text-center shadow-md transition-colors mx-auto "
+      className="cursor-pointer rounded-lg p-4 text-center shadow-md transition-colors mx-auto"
       style={{ 
         width,
-        maxWidth: '70rem', // Increased max-width for the root level
+        maxWidth: '70rem',
         backgroundColor: `hsl(${hue}, 70%, 90%)`,
       }}
       whileHover={{ scale: 1.05 }}
@@ -101,10 +116,11 @@ const FunnelLevel = ({ node, depth, onSelect }: { node: TreeNode; depth: number;
 
 const TicketCard = ({ ticket, onClick }: { ticket: Ticket; onClick: () => void }) => {
   const statusColor = {
-    'Open': 'bg-yellow-100 text-yellow-800',
-    'In Progress': 'bg-blue-100 text-blue-800',
-    'Closed': 'bg-green-100 text-green-800',
-  }[ticket.currentStatus] || 'bg-gray-100 text-gray-800'
+    'New': 'bg-yellow-100 text-yellow-800',
+    'ONHOLD': 'bg-orange-100 text-orange-800',
+    'INV': 'bg-purple-100 text-purple-800',
+    'RESOLVED': 'bg-green-100 text-green-800',
+  }[ticket.ticketStatus] || 'bg-gray-100 text-gray-800'
 
   return (
     <motion.div
@@ -112,16 +128,16 @@ const TicketCard = ({ ticket, onClick }: { ticket: Ticket; onClick: () => void }
       whileHover={{ scale: 1.03 }}
       onClick={onClick}
     >
-      <h3 className="font-bold text-lg mb-2 text-gray-800">{ticket.issue}</h3>
+      <h3 className="font-bold text-lg mb-2 text-gray-800">{ticket.title}</h3>
       <div className="flex items-center mb-2">
         <AlertCircle className="w-4 h-4 mr-2 text-red-500" />
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
-          {ticket.currentStatus}
+          {ticket.ticketStatus}
         </span>
       </div>
       <div className="flex items-center mb-2">
         <User className="w-4 h-4 mr-2 text-blue-500" />
-        <span className="text-sm text-gray-600">{ticket.customer}</span>
+        <span className="text-sm text-gray-600">{ticket.domains.map(d => d.name).join(', ')}</span>
       </div>
       <div className="flex items-center mb-2">
         <Tag className="w-4 h-4 mr-2 text-purple-500" />
@@ -129,32 +145,16 @@ const TicketCard = ({ ticket, onClick }: { ticket: Ticket; onClick: () => void }
       </div>
       <div className="flex items-center">
         <Calendar className="w-4 h-4 mr-2 text-green-500" />
-        <span className="text-sm text-gray-600">{new Date(ticket.dateOpened).toLocaleDateString()}</span>
+        <span className="text-sm text-gray-600">{new Date(ticket.reportedOn).toLocaleDateString()}</span>
       </div>
     </motion.div>
   )
 }
 
-export default function Component() {
-  const [tickets, setTickets] = useState<Ticket[]>([])
+export default function Component({ tickets, resolutions }: ComponentProps) {
   const [groupedTickets, setGroupedTickets] = useState<TreeNode | null>(null)
   const [selectedPath, setSelectedPath] = useState<TreeNode[]>([])
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/data.json')
-        const data = await response.json()
-        setTickets(data)
-        console.log("Tickets data:", data)
-      } catch (error) {
-        console.error("Error fetching ticket data:", error)
-      }
-    }
-
-    fetchData()
-  }, [])
 
   useEffect(() => {
     if (tickets.length > 0) {
@@ -168,6 +168,10 @@ export default function Component() {
       newPath.push(node)
       return newPath
     })
+  }
+
+  const findResolution = (ticketId: number) => {
+    return resolutions.find(resolution => resolution.id === ticketId)
   }
 
   return (
@@ -213,7 +217,7 @@ export default function Component() {
             >
               {selectedPath[selectedPath.length - 1].tickets!.map((ticket) => (
                 <TicketCard
-                  key={ticket.ticketId}
+                  key={ticket.id}
                   ticket={ticket}
                   onClick={() => setSelectedTicket(ticket)}
                 />
@@ -239,18 +243,18 @@ export default function Component() {
                 className="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-auto"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-3xl font-bold mb-6 text-gray-800">{selectedTicket.issue}</h2>
+                <h2 className="text-3xl font-bold mb-6 text-gray-800">{selectedTicket.title}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="flex items-center">
                       <AlertCircle className="w-6 h-6 mr-3 text-blue-500" />
                       <span className="font-semibold">Status:</span>
-                      <span className="ml-2">{selectedTicket.currentStatus}</span>
+                      <span className="ml-2">{selectedTicket.ticketStatus}</span>
                     </div>
                     <div className="flex items-center">
                       <User className="w-6 h-6 mr-3 text-green-500" />
-                      <span className="font-semibold">Customer:</span>
-                      <span className="ml-2">{selectedTicket.customer}</span>
+                      <span className="font-semibold">Domains:</span>
+                      <span className="ml-2">{selectedTicket.domains.map(d => d.name).join(', ')}</span>
                     </div>
                     <div className="flex items-center">
                       <Tag className="w-6 h-6 mr-3 text-purple-500" />
@@ -259,49 +263,70 @@ export default function Component() {
                     </div>
                     <div className="flex items-center">
                       <Clock className="w-6 h-6 mr-3 text-red-500" />
-                      <span className="font-semibold">Opened:</span>
-                      <span className="ml-2">{new Date(selectedTicket.dateOpened).toLocaleString()}</span>
+                      <span className="font-semibold">Reported:</span>
+                      <span className="ml-2">{new Date(selectedTicket.reportedOn).toLocaleString()}</span>
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <div>
-                      <span className="font-semibold">Platform:</span>
-                      <span className="ml-2">{selectedTicket.platform}</span>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Category:</span>
-                      <span className="ml-2">{selectedTicket.category}</span>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Impact:</span>
-                      <span className="ml-2">{selectedTicket.impact}</span>
-                    </div>
-                    <div>
+                    <div className="flex items-center">
+                      <Hash className="w-6 h-6 mr-3 text-yellow-500" />
                       <span className="font-semibold">Type:</span>
                       <span className="ml-2">{selectedTicket.type}</span>
                     </div>
+                    <div className="flex items-center">
+                      <Layers className="w-6 h-6 mr-3 text-indigo-500" />
+                      <span className="font-semibold">Tier:</span>
+                      <span className="ml-2">{selectedTicket.tiers}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <AlertCircle className="w-6 h-6 mr-3 text-orange-500" />
+                      <span className="font-semibold">Priority:</span>
+                      <span className="ml-2">{selectedTicket.priority}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <User className="w-6 h-6 mr-3 text-teal-500" />
+                      <span className="font-semibold">Owner:</span>
+                      <span className="ml-2">{selectedTicket.owner.name}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="mt-6">
-                  <h3 className="text-xl font-semibold mb-2">Affected Services</h3>
+                  <h3 className="text-xl font-semibold mb-2">Tags</h3>
                   <div className="flex flex-wrap gap-2">
-                    {selectedTicket.affectedServices.map((service, index) => (
-                      <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
-                        {service}
+                    {selectedTicket.tags.map((tag) => (
+                      <span key={tag.id} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                        {tag.label}
                       </span>
                     ))}
                   </div>
                 </div>
                 <div className="mt-6">
-                  <h3 className="text-xl font-semibold mb-2">Engaged Engineers</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTicket.engagedEngineers.map((engineer, index) => (
-                      <span key={index} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
-                        {engineer}
-                      </span>
+                  <h3 className="text-xl font-semibold mb-2">Engagements</h3>
+                  <div className="space-y-2">
+                    {selectedTicket.engagements.map((engagement) => (
+                      <div key={engagement.id} className="flex items-center">
+                        <MessageSquare className="w-5 h-5 mr-2 text-gray-500" />
+                        <span>{engagement.action} by {engagement.member.name} on {new Date(engagement.engagedOn).toLocaleString()}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
+                {findResolution(selectedTicket.id) && (
+                  <div className="mt-6">
+                    <h3 className="text-xl font-semibold mb-2">Resolution</h3>
+                    <div className="space-y-2">
+                      
+                      <div>
+                        <span className="font-semibold">Root Cause: </span>
+                        <span>{findResolution(selectedTicket.id)?.rootCause}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold">Solution: </span>
+                        <span>{findResolution(selectedTicket.id)?.solution}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <button
                   className="mt-8 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
                   onClick={() => setSelectedTicket(null)}

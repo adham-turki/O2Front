@@ -14,20 +14,31 @@ import Sankey from './components/SankeyChart';
 
 
 function App() {
-  const [tickets, setTickets] = useState([]);
+  const [ticketsData, setTicketsData] = useState([]);
+  const [resolutions, setResolutions] = useState([]);
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchtickets = async () => {
       try {
-        const response = await fetch('/data.json');
+        const response = await fetch('http://localhost:1337/api/tickets');
         const data = await response.json();
-        setTickets(data);
-        console.log("Tickets data:", data);
-      } catch (error) {
+        setTicketsData(data.data);
+      }
+      catch (error) {
         console.error("Error fetching ticket data:", error);
       }
     };
-
-    fetchData();
+    const fetchResolutions = async () => {
+      try {
+        const response = await fetch('http://localhost:1337/api/resolutions');
+        const data = await response.json();
+        setResolutions(data.data);
+      }
+      catch (error) {
+        console.error("Error fetching ticket data:", error);
+      }
+    };
+    fetchtickets();
+    fetchResolutions();
   }, []);
   return (
     <Router>
@@ -36,15 +47,15 @@ function App() {
         <div style={{ flexGrow: 1, marginTop: '48px' }}>
           <Routes>
             <Route path="/" element={<Navigate to="/main-dashboard" />} />
-            <Route path="/main-dashboard" element={<MainDashboard ticketData={tickets} />} />
-            <Route path="/ticket-dashboard" element={<TicketsDashboard tickets={tickets} />} />
-            <Route path="/engineers-dashboard" element={<EngineersDashboard ticketData={tickets} />} />
-            <Route path="/custom-dashboard" element={<CustomDashboard ticketData={tickets} />} />
-            <Route path="/manager-dashboard" element={<ManagerDashboard ticketData={tickets} />} />
+            <Route path="/main-dashboard" element={<MainDashboard  tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/ticket-dashboard" element={<TicketsDashboard tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/engineers-dashboard" element={<EngineersDashboard tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/custom-dashboard" element={<CustomDashboard tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/manager-dashboard" element={<ManagerDashboard tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/ticket-flow" element={<TicketWorkflow />} />
-            <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-            <Route path="/tickets-funnel" element={<Sankey />} />
-            <Route path="/advanced-tickets-funnel" element={<Component />} />
+            <Route path="/customer-dashboard" element={<CustomerDashboard tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/tickets-funnel" element={<Sankey tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/advanced-tickets-funnel" element={<Component tickets={ticketsData} resolutions={resolutions} />} />
           </Routes>
         </div>
       </div>

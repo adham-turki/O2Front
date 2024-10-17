@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+'use client'
+
+import React, { useState, useEffect } from 'react'
 import {
     Box, Typography, Paper, Grid, Chip, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     Card, CardContent, CircularProgress, LinearProgress, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText
-} from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
-import { Person, BugReport, CheckCircle, Error, AccessTime } from '@mui/icons-material';
+} from '@mui/material'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
+import { Person, BugReport, CheckCircle, Error, AccessTime } from '@mui/icons-material'
 
 const theme = createTheme({
     palette: {
@@ -16,79 +18,70 @@ const theme = createTheme({
             main: '#f50057',
         },
     },
-});
+})
 
-
-export default function CustomerDashboard() {
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedCustomer, setSelectedCustomer] = useState(null);
-    const [openDialog, setOpenDialog] = useState(false);
+export default function CustomerDashboard({ resolutions, tickets }) {
+    const [loading, setLoading] = useState(true)
+    const [selectedCustomer, setSelectedCustomer] = useState(null)
+    const [openDialog, setOpenDialog] = useState(false)
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await fetch('/data.json');
-                const data = await response.json();
-                setTickets(data);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching ticket data:", error);
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
+        if (resolutions && tickets) {
+            setLoading(false)
+        }
+    }, [resolutions, tickets])
 
     const getCustomerStats = () => {
-        const stats = {};
+        const stats = {}
         tickets.forEach(ticket => {
-            if (!stats[ticket.customer]) {
-                stats[ticket.customer] = { total: 0, solved: 0, slaViolations: 0 };
-            }
-            stats[ticket.customer].total += 1;
-            if (ticket.isSolved) stats[ticket.customer].solved += 1;
-            if (!ticket.SLA) stats[ticket.customer].slaViolations += 1;
-        });
+            ticket.domains.forEach(domain => {
+                if (!stats[domain.name]) {
+                    stats[domain.name] = { total: 0, solved: 0, slaViolations: 0 }
+                }
+                stats[domain.name].total += 1
+                if (ticket.resolvedOn) stats[domain.name].solved += 1
+                if (!ticket.metSla) stats[domain.name].slaViolations += 1
+            })
+        })
         return Object.entries(stats).map(([customer, data]) => ({
             customer,
             total: data.total,
             solved: data.solved,
             slaViolations: data.slaViolations,
             slaPerformance: ((data.total - data.slaViolations) / data.total) * 100
-        })).sort((a, b) => b.total - a.total);
-    };
+        })).sort((a, b) => b.total - a.total)
+    }
 
     const getCustomerTicketDistribution = () => {
-        const distribution = tickets.reduce((acc, ticket) => {
-            acc[ticket.customer] = (acc[ticket.customer] || 0) + 1;
-            return acc;
-        }, {});
-        return Object.entries(distribution).map(([name, value]) => ({ name, value }));
-    };
-
+        const distribution = {}
+        tickets.forEach(ticket => {
+            ticket.domains.forEach(domain => {
+                distribution[domain.name] = (distribution[domain.name] || 0) + 1
+            })
+        })
+        return Object.entries(distribution).map(([name, value]) => ({ name, value }))
+    }
 
     const getAverageSLAPerformance = () => {
-        const slaPerformances = getCustomerStats().map(stat => stat.slaPerformance);
-        return slaPerformances.reduce((a, b) => a + b, 0) / slaPerformances.length;
-    };
+        const slaPerformances = getCustomerStats().map(stat => stat.slaPerformance)
+        return slaPerformances.reduce((a, b) => a + b, 0) / slaPerformances.length
+    }
 
     const handleCustomerClick = (customer) => {
-        setSelectedCustomer(customer);
-        setOpenDialog(true);
-    };
+        setSelectedCustomer(customer)
+        setOpenDialog(true)
+    }
 
     const handleCloseDialog = () => {
-        setOpenDialog(false);
-    };
+        setOpenDialog(false)
+    }
 
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
                 <CircularProgress />
             </Box>
-        );
+        )
     }
 
     return (
@@ -121,7 +114,7 @@ export default function CustomerDashboard() {
                                     Open Tickets
                                 </Typography>
                                 <Typography variant="h4" component="div">
-                                    {tickets.filter(ticket => !ticket.isSolved).length}
+                                    {tickets.filter(ticket => ticket.ticketStatus !== 'RESOLVED').length}
                                 </Typography>
                                 <Typography color="#ff6500">
                                     <Error /> Needs attention
@@ -136,7 +129,7 @@ export default function CustomerDashboard() {
                                     Resolved Tickets
                                 </Typography>
                                 <Typography variant="h4" component="div">
-                                    {tickets.filter(ticket => ticket.isSolved).length}
+                                    {tickets.filter(ticket => ticket.ticketStatus === 'RESOLVED').length}
                                 </Typography>
                                 <Typography color="#2e7d32">
                                     <CheckCircle /> Successfully closed
@@ -176,8 +169,6 @@ export default function CustomerDashboard() {
                             </ResponsiveContainer>
                         </Paper>
                     </Grid>
-
-
 
                     <Grid item xs={12}>
                         <TableContainer component={Paper}>
@@ -237,17 +228,17 @@ export default function CustomerDashboard() {
                     <DialogContent>
                         <List>
                             {tickets
-                                .filter(ticket => ticket.customer === selectedCustomer)
+                                .filter(ticket => ticket.domains.some(domain => domain.name === selectedCustomer))
                                 .map(ticket => (
-                                    <ListItem key={ticket.ticketId}>
+                                    <ListItem key={ticket.id}>
                                         <ListItemText
-                                            primary={ticket.issue}
+                                            primary={ticket.title}
                                             secondary={
                                                 <React.Fragment>
                                                     <Typography component="span" variant="body2" color="text.primary">
-                                                        Status: {ticket.currentStatus}
+                                                        Status: {ticket.ticketStatus}
                                                     </Typography>
-                                                    {` — ${ticket.category}, Severity: ${ticket.severity}`}
+                                                    {` — ${ticket.type}, Severity: ${ticket.severity}`}
                                                 </React.Fragment>
                                             }
                                         />
@@ -259,5 +250,5 @@ export default function CustomerDashboard() {
                 </Dialog>
             </Box>
         </ThemeProvider>
-    );
+    )
 }

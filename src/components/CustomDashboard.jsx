@@ -1,4 +1,6 @@
-import  { useState, useEffect } from 'react';
+'use client'
+
+import { useState, useEffect } from 'react'
 import {
   Box,
   Card,
@@ -13,8 +15,8 @@ import {
   CssBaseline,
   styled,
   IconButton,
-} from '@mui/material';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+} from '@mui/material'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
 import {
   Dashboard,
   BugReport,
@@ -24,11 +26,9 @@ import {
   Warning,
   DateRange,
   Person
-} from '@mui/icons-material';
-import PropTypes from 'prop-types';
+} from '@mui/icons-material'
 
-
-const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
+const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
 
 const theme = createTheme({
   palette: {
@@ -45,7 +45,7 @@ const theme = createTheme({
   typography: {
     fontFamily: 'Roboto, sans-serif',
   },
-});
+})
 
 const StyledCard = styled(Card)(({ theme }) => ({
   background: 'linear-gradient(45deg, #7E57C2 30%, #5E35B1 90%)',
@@ -56,7 +56,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
     boxShadow: '0 16px 70px -12.125px rgba(0,0,0,0.3)',
     transform: 'translateY(-3px)',
   },
-}));
+}))
 
 const StyledCardContent = styled(CardContent)({
   display: 'flex',
@@ -65,35 +65,30 @@ const StyledCardContent = styled(CardContent)({
   justifyContent: 'center',
   padding: '20px',
   color: 'white',
-});
+})
 
 const AnimatedNumber = ({ value, duration = 1000 }) => {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(0)
 
   useEffect(() => {
-    let start = 0;
-    const end = parseInt(value);
-    if (start === end) return;
+    let start = 0
+    const end = parseInt(value)
+    if (start === end) return
 
     let timer = setInterval(() => {
-      start += 1;
-      setCount(start);
-      if (start === end) clearInterval(timer);
-    }, duration / end);
+      start += 1
+      setCount(start)
+      if (start === end) clearInterval(timer)
+    }, duration / end)
 
-    return () => clearInterval(timer);
-  }, [value, duration]);
+    return () => clearInterval(timer)
+  }, [value, duration])
 
-  return <span>{count}</span>;
-};
-//add props validation for animated number
-AnimatedNumber.propTypes = {
-  value: PropTypes.number.isRequired,
-  duration: PropTypes.number
-};
+  return <span>{count}</span>
+}
 
 function TabPanel(props) {
-  const { children, value, index, ...other } = props;
+  const { children, value, index, ...other } = props
 
   return (
     <div
@@ -109,104 +104,86 @@ function TabPanel(props) {
         </Box>
       )}
     </div>
-  );
+  )
 }
 
-export default function CustomDashboard() {
-  const [ticketData, setTickets] = useState([]);
+export default function CustomDashboard({  tickets }) {
   const [data, setData] = useState({
     totalTickets: 0,
     openTickets: 0,
     avgResolutionTime: 0,
     slaCompliance: 0,
-    platformDistribution: [],
+    typeDistribution: [],
     severityDistribution: [],
     monthlyTickets: [],
     topEngineers: [],
-  });
-  const [tabValue, setTabValue] = useState(0);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/data.json');
-        const data = await response.json();
-        setTickets(data);
-        console.log("Tickets data:", data);
-      } catch (error) {
-        console.error("Error fetching ticket data:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
+  })
+  const [tabValue, setTabValue] = useState(0)
 
   useEffect(() => {
     const processData = () => {
       const result = {
-        totalTickets: ticketData.length,
+        totalTickets: tickets.length,
         openTickets: 0,
         avgResolutionTime: 0,
         slaCompliance: 0,
-        platformDistribution: { BE: 0, FE: 0 },
+        typeDistribution: {},
         severityDistribution: {},
         monthlyTickets: {},
         topEngineers: {},
-      };
+      }
 
-      ticketData.forEach(ticket => {
-        if (!ticket.isSolved) result.openTickets++;
+      tickets.forEach(ticket => {
+        if (ticket.ticketStatus !== 'RESOLVED') result.openTickets++
 
-        // Count platform distribution
-        result.platformDistribution[ticket.platform] = (result.platformDistribution[ticket.platform] || 0) + 1;
+        // Count type distribution
+        result.typeDistribution[ticket.type] = (result.typeDistribution[ticket.type] || 0) + 1
 
         // Count severity distribution
-        result.severityDistribution[ticket.severity] = (result.severityDistribution[ticket.severity] || 0) + 1;
+        result.severityDistribution[ticket.severity] = (result.severityDistribution[ticket.severity] || 0) + 1
 
         // Count monthly tickets
-        const month = new Date(ticket.dateOpened).toLocaleString('default', { month: 'long' });
-        result.monthlyTickets[month] = (result.monthlyTickets[month] || 0) + 1;
+        const month = new Date(ticket.reportedOn).toLocaleString('default', { month: 'long' })
+        result.monthlyTickets[month] = (result.monthlyTickets[month] || 0) + 1
 
         // Check SLA compliance
-        if (ticket.SLA) result.slaCompliance++;
+        if (ticket.metSla) result.slaCompliance++
 
-        // Calculate average resolution time for solved tickets
-        if (ticket.isSolved) {
-          const resolutionTime = new Date(ticket.resolutionTime).getTime() - new Date(ticket.dateOpened).getTime();
-          result.avgResolutionTime += resolutionTime;
+        // Calculate average resolution time for resolved tickets
+        if (ticket.resolvedOn) {
+          const resolutionTime = new Date(ticket.resolvedOn).getTime() - new Date(ticket.reportedOn).getTime()
+          result.avgResolutionTime += resolutionTime
         }
 
         // Count top engineers
-        ticket.engagedEngineers.forEach(engineer => {
-          result.topEngineers[engineer] = (result.topEngineers[engineer] || 0) + 1;
-        });
-      });
+        result.topEngineers[ticket.owner.name] = (result.topEngineers[ticket.owner.name] || 0) + 1
+      })
 
       // Calculate the final average resolution time in hours
-      result.avgResolutionTime = result.avgResolutionTime / ticketData.filter(t => t.isSolved).length / (1000 * 60 * 60);
+      result.avgResolutionTime = result.avgResolutionTime / tickets.filter(t => t.resolvedOn).length / (1000 * 60 * 60)
 
       // Calculate SLA compliance percentage
-      result.slaCompliance = (result.slaCompliance / result.totalTickets) * 100;
+      result.slaCompliance = (result.slaCompliance / result.totalTickets) * 100
 
       // Prepare data for charts
       setData({
         ...result,
-        platformDistribution: Object.entries(result.platformDistribution).map(([name, value]) => ({ name, value })),
+        typeDistribution: Object.entries(result.typeDistribution).map(([name, value]) => ({ name, value })),
         severityDistribution: Object.entries(result.severityDistribution).map(([name, value]) => ({ name, value })),
         monthlyTickets: Object.entries(result.monthlyTickets).map(([name, value]) => ({ name, value })),
         topEngineers: Object.entries(result.topEngineers)
           .sort((a, b) => b[1] - a[1])
           .slice(0, 5)
           .map(([name, value]) => ({ name, value })),
-      });
-    };
+      })
+    }
 
-    processData();
-  }, [ticketData]); // Added ticketData as a dependency
+    processData()
+  }, [tickets])
 
   const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
+    setTabValue(newValue)
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -216,22 +193,22 @@ export default function CustomDashboard() {
           Custom Statistics
         </Typography>
         <Grid container spacing={3} sx={{ mb: 4 }} justifyContent="center" alignItems="center">
-        {[
+          {[
             { title: 'Total Tickets', value: data.totalTickets, icon: <Dashboard /> },
-            { title: 'Avg. Resolution Time', value: `${data.avgResolutionTime.toFixed(2)} hrs`, icon: <AccessTime /> },
-            { title: 'SLA Compliance', value: `${data.slaCompliance.toFixed(2)} `, icon: <CheckCircle /> },
+            { title: 'Avg. Resolution Time', value: `${data.avgResolutionTime.toFixed(2)}`, icon: <AccessTime /> },
+            { title: 'SLA Compliance', value: `${data.slaCompliance.toFixed(2)}`, icon: <CheckCircle /> },
           ].map((item, index) => (
             <Grid item xs={12} sm={6} md={3} key={index} >
               <StyledCard >
                 <StyledCardContent>
-                  <IconButton sx={{ coloar: 'white', mb: 2 }}>
+                  <IconButton sx={{ color: 'white', mb: 2 }}>
                     {item.icon}
                   </IconButton>
                   <Typography variant="h6" component="div" gutterBottom>
                     {item.title}
                   </Typography>
                   <Typography variant="h4">
-                    <AnimatedNumber value={item.value} />
+                    <AnimatedNumber value={parseFloat(item.value)} />
                     {item.title === 'SLA Compliance' && '%'}
                     {item.title === 'Avg. Resolution Time' && 'h'}
                   </Typography>
@@ -255,7 +232,7 @@ export default function CustomDashboard() {
               }
             }}
           >
-            <Tab icon={<Computer />} label="Platform" />
+            <Tab icon={<Computer />} label="Type" />
             <Tab icon={<Warning />} label="Severity" />
             <Tab icon={<DateRange />} label="Monthly" />
             <Tab icon={<Person />} label="Engineers" />
@@ -263,11 +240,11 @@ export default function CustomDashboard() {
         </AppBar>
         <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3, p: 3 }}>
           <TabPanel value={tabValue} index={0}>
-            <Typography variant="h6" gutterBottom>Platform Distribution</Typography>
+            <Typography variant="h6" gutterBottom>Type Distribution</Typography>
             <ResponsiveContainer width="100%" height={400}>
               <PieChart>
                 <Pie
-                  data={data.platformDistribution}
+                  data={data.typeDistribution}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -276,7 +253,7 @@ export default function CustomDashboard() {
                   dataKey="value"
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
-                  {data.platformDistribution.map((entry, index) => (
+                  {data.typeDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -331,5 +308,5 @@ export default function CustomDashboard() {
         </Box>
       </Box>
     </ThemeProvider>
-  );
+  )
 }

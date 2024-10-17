@@ -138,7 +138,7 @@ export default function ManagerDashboard({ resolutions, tickets }) {
     return tickets.filter(ticket => isAfter(parseISO(ticket.reportedOn), filterDate))
   }, [tickets, dateRange])
 
-  // Memoized data processing functions (using filteredTickets instead of tickets)
+  // Updated data processing functions
   const monthlyResolutionRate = useMemo(() => {
     const monthlyData = {}
     filteredTickets.forEach(ticket => {
@@ -216,14 +216,16 @@ export default function ManagerDashboard({ resolutions, tickets }) {
   const ticketResolutionRateByEngineer = useMemo(() => {
     const engineerData = {}
     filteredTickets.forEach(ticket => {
-      const engineer = ticket.owners.name
-      if (!engineerData[engineer]) {
-        engineerData[engineer] = { resolved: 0, total: 0 }
-      }
-      engineerData[engineer].total++
-      if (ticket.resolvedOn) {
-        engineerData[engineer].resolved++
-      }
+      ticket.owners.forEach(owner => {
+        const engineer = owner.name
+        if (!engineerData[engineer]) {
+          engineerData[engineer] = { resolved: 0, total: 0 }
+        }
+        engineerData[engineer].total++
+        if (ticket.resolvedOn) {
+          engineerData[engineer].resolved++
+        }
+      })
     })
     return Object.entries(engineerData)
       .map(([engineer, data]) => ({
@@ -239,8 +241,10 @@ export default function ManagerDashboard({ resolutions, tickets }) {
     const engineerData = {}
     let totalTickets = filteredTickets.length
     filteredTickets.forEach(ticket => {
-      const engineer = ticket.owners.name
-      engineerData[engineer] = (engineerData[engineer] || 0) + 1
+      ticket.owners.forEach(owner => {
+        const engineer = owner.name
+        engineerData[engineer] = (engineerData[engineer] || 0) + 1
+      })
     })
     return Object.entries(engineerData)
       .map(([engineer, count]) => ({
@@ -362,7 +366,6 @@ export default function ManagerDashboard({ resolutions, tickets }) {
                 <IconWrapper>
                   <Timeline />
                 </IconWrapper>
-                
                 <Typography variant="h6" gutterBottom>
                   Average Resolution Time Trend
                 </Typography>
@@ -407,8 +410,8 @@ export default function ManagerDashboard({ resolutions, tickets }) {
                 <IconWrapper>
                   <PieChartIcon />
                 </IconWrapper>
-                <Typography variant="h6"   gutterBottom>
-                  SLA Compliance by Severity
+                <Typography variant="h6" gutterBottom>
+                  SLA Compliance  by Severity
                 </Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>

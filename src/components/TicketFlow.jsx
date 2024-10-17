@@ -125,7 +125,7 @@ export default function EnhancedTicketWorkflow() {
       description: eng.message,
       icon: engagementIcons[eng.action] || <AccessTime />,
       color: theme.palette.secondary.main,
-      members: eng.members?.name || 'Unknown' // Handle potential undefined members
+      members: eng.members[0]?.name || 'Unknown' // Handle potential undefined members
     })),
     { date: firstResolution.lastSeen || new Date(), title: "Incident Last Seen", icon: <Error />, color: theme.palette.error.main },
 ];

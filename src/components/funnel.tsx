@@ -14,18 +14,18 @@ const groupTickets = (tickets) => {
 
   tickets.forEach((ticket) => {
     // Tier level
-    if (!tiers[ticket.tiers]) {
-      tiers[ticket.tiers] = { name: ticket.tiers, type: 'tier', children: [], value: 0 }
-      root.children.push(tiers[ticket.tiers])
+    if (!tiers[ticket.tier]) {
+      tiers[ticket.tier] = { name: ticket.tier, type: 'tier', children: [], value: 0 }
+      root.children.push(tiers[ticket.tier])
     }
-    tiers[ticket.tiers].value++
+    tiers[ticket.tier].value++
 
     // Domain level
     ticket.domains.forEach(domain => {
-      const domainKey = `${ticket.tiers}-${domain.name}`
+      const domainKey = `${ticket.tier}-${domain.name}`
       if (!domains[domainKey]) {
         domains[domainKey] = { name: domain.name, type: 'domain', children: [], value: 0 }
-        tiers[ticket.tiers].children.push(domains[domainKey])
+        tiers[ticket.tier].children.push(domains[domainKey])
       }
       domains[domainKey].value++
 
@@ -236,7 +236,7 @@ export default function Component({ tickets = [], resolutions = [] }) {
                     <div className="flex items-center">
                       <Layers className="w-6 h-6 mr-3 text-indigo-500" />
                       <span className="font-semibold">Tier:</span>
-                      <span className="ml-2">{selectedTicket.tiers}</span>
+                      <span className="ml-2">{selectedTicket.tier}</span>
                     </div>
                     <div className="flex items-center">
                       <AlertCircle className="w-6 h-6 mr-3 text-orange-500" />

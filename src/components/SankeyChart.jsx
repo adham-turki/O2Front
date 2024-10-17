@@ -27,12 +27,12 @@ export default function SankeyChart() {
 
         ticket.domains.forEach((domain) => {
             sankeyData.push([ticket.type, domain.name, 1]);
-            sankeyData.push([domain.name, ticket.tiers, 1]);
+            sankeyData.push([domain.name, ticket.tier, 1]);
 
         });
         ticket.tags.forEach((tag) => {
 
-            sankeyData.push([ticket.tiers, tag.label, 1]);
+            sankeyData.push([ticket.tier, tag.label, 1]);
 
             sankeyData.push([tag.label, ticket.reportedBy.name, 1]);
         });

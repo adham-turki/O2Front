@@ -136,17 +136,24 @@ export default function MainDashboard({ tickets, resolutions }) {
   const openTickets = totalTickets - solvedTickets
 
   const engineerPerformanceData = filteredTickets.reduce((acc, ticket) => {
-    const owners = ticket.owners.name
-    if (!acc[owners]) {
-      acc[owners] = { name: owners, solved: 0, open: 0, total: 0 }
-    }
-    acc[owners].total += 1
-    if (ticket.resolvedOn) {
-      acc[owners].solved += 1
-    } else {
-      acc[owners].open += 1
-    }
+    const owners = ticket.owners
+    owners.map(owner => {
+    
+      try {
+        
+        acc[owner.name].total += 1  
+        if (ticket.resolvedOn) {
+          acc[owner.name].solved += 1
+        } else {
+          acc[owner.name].open += 1
+        }
+      } catch (error) {
+          acc[owner.name] = { name: owner.name, solved: 0, open: 0, total: 0 }
+        
+      }
+    })
     return acc
+   
   }, {})
 
   const topEngineers = Object.values(engineerPerformanceData)

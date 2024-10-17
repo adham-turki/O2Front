@@ -185,7 +185,7 @@ export default function CustomDashboard({ tickets }) {
         }
 
         // Count top engineers
-        result.topEngineers[ticket.owner.name] = (result.topEngineers[ticket.owner.name] || 0) + 1
+        result.topEngineers[ticket.owners.name] = (result.topEngineers[ticket.owners.name] || 0) + 1
       })
 
       // Calculate the final average resolution time in hours

@@ -216,7 +216,7 @@ export default function ManagerDashboard({ resolutions, tickets }) {
   const ticketResolutionRateByEngineer = useMemo(() => {
     const engineerData = {}
     filteredTickets.forEach(ticket => {
-      const engineer = ticket.owner.name
+      const engineer = ticket.owners.name
       if (!engineerData[engineer]) {
         engineerData[engineer] = { resolved: 0, total: 0 }
       }
@@ -239,7 +239,7 @@ export default function ManagerDashboard({ resolutions, tickets }) {
     const engineerData = {}
     let totalTickets = filteredTickets.length
     filteredTickets.forEach(ticket => {
-      const engineer = ticket.owner.name
+      const engineer = ticket.owners.name
       engineerData[engineer] = (engineerData[engineer] || 0) + 1
     })
     return Object.entries(engineerData)

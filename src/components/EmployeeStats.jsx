@@ -128,8 +128,11 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     // Data processing functions (using filteredTickets instead of tickets)
     const processOnCallLeaderboard = () => {
         const onCallCounts = filteredTickets.reduce((acc, ticket) => {
-            const owner = ticket.owner.name
-            acc[owner] = (acc[owner] || 0) + 1
+            const owners = ticket.owners
+            owners.map(owner =>{
+
+                acc[owner.name] = (acc[owner.name] || 0) + 1
+            })
             return acc
         }, {})
         return Object.entries(onCallCounts)
@@ -142,7 +145,8 @@ export default function EngineersDashboard({ tickets, resolutions }) {
         const nodes = new Set()
         const links = []
         filteredTickets.forEach(ticket => {
-            const engineers = ticket.engagements.map(engagement => engagement.member.name)
+            const engineers = ticket.engagements.map(engagement => engagement.members.map(member => member.name))
+            console.log(engineers ,"--------")
             engineers.forEach((engineer, i) => {
                 nodes.add(engineer)
                 engineers.forEach((otherEngineer, j) => {
@@ -165,9 +169,9 @@ export default function EngineersDashboard({ tickets, resolutions }) {
                 acc[user][role]++
             }
 
-            addContribution(ticket.owner.name, 'onCall')
-            ticket.engagements.forEach(engagement => addContribution(engagement.member.name, 'participant'))
-            if (ticket.resolvedOn) addContribution(ticket.owner.name, 'solver')
+            addContribution(ticket.owners.name, 'onCall')
+            ticket.engagements.forEach(engagement => addContribution(engagement.members.name, 'participant'))
+            if (ticket.resolvedOn) addContribution(ticket.owners.name, 'solver')
 
             return acc
         }, {})
@@ -181,7 +185,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
 
     const processEfficiencyRadar = () => {
         const userData = filteredTickets.reduce((acc, ticket) => {
-            const user = ticket.owner.name
+            const user = ticket.owners.name
             if (!acc[user]) {
                 acc[user] = { name: user, solved: 0, avgSolutionTime: 0, onCall: 0, collaborations: 0 }
             }
@@ -201,7 +205,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     const processSolversEfficiencyScoreboard = () => {
         const solverData = filteredTickets.reduce((acc, ticket) => {
             if (ticket.resolvedOn) {
-                const solver = ticket.owner.name
+                const solver = ticket.owners.name
                 if (!acc[solver]) {
                     acc[solver] = { name: solver, avgSolutionTime: 0, avgSeverity: 0, totalTickets: 0 }
                 }
@@ -220,7 +224,7 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     const processProblemSolversTree = () => {
         const solverData = filteredTickets.reduce((acc, ticket) => {
             if (ticket.resolvedOn) {
-                const solver = ticket.owner.name
+                const solver = ticket.owners.name
                 if (!acc[solver]) {
                     acc[solver] = { name: solver, children: {} }
                 }

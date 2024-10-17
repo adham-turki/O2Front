@@ -125,7 +125,7 @@ export default function EnhancedTicketWorkflow() {
       description: eng.message,
       icon: engagementIcons[eng.action] || <AccessTime />,
       color: theme.palette.secondary.main,
-      member: eng.member?.name || 'Unknown' // Handle potential undefined member
+      members: eng.members?.name || 'Unknown' // Handle potential undefined members
     })),
     { date: firstResolution.lastSeen || new Date(), title: "Incident Last Seen", icon: <Error />, color: theme.palette.error.main },
 ];
@@ -210,11 +210,11 @@ timelineEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
               </Typography>
               <Box mt={2}>
                 <Typography variant="subtitle2">Involved Members:</Typography>
-                {firstResolution.members?.map((member, index) => (
+                {firstResolution.members?.map((members, index) => (
                   <Chip
                     key={index}
-                    avatar={<Avatar>{member.name[0]}</Avatar>}
-                    label={member.name}
+                    avatar={<Avatar>{members.name[0]}</Avatar>}
+                    label={members.name}
                     variant="outlined"
                     sx={{ m: 0.5 }}
                     color="primary"
@@ -294,9 +294,9 @@ timelineEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
                           {event.description}
                         </Typography>
                       )}
-                      {event.member && (
+                      {event.members && (
                         <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
-                          by: {event.member}
+                          by: {event.members}
                         </Typography>
                       )}
                     </MotionPaper>

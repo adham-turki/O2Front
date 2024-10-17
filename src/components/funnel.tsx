@@ -245,8 +245,8 @@ export default function Component({ tickets = [], resolutions = [] }) {
                     </div>
                     <div className="flex items-center">
                       <User className="w-6 h-6 mr-3 text-teal-500" />
-                      <span className="font-semibold">Owner:</span>
-                      <span className="ml-2">{selectedTicket.owner.name}</span>
+                      <span className="font-semibold">owners:</span>
+                      <span className="ml-2">{selectedTicket.owners.name}</span>
                     </div>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ export default function Component({ tickets = [], resolutions = [] }) {
                     {selectedTicket.engagements.map((engagement) => (
                       <div key={engagement.id} className="flex items-center">
                         <MessageSquare className="w-5 h-5 mr-2 text-gray-500" />
-                        <span>{engagement.action} by {engagement.member.name} on {new Date(engagement.engagedOn).toLocaleString()}</span>
+                        <span>{engagement.action} by {engagement.members.name} on {new Date(engagement.engagedOn).toLocaleString()}</span>
                       </div>
                     ))}
                   </div>

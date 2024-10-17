@@ -136,15 +136,15 @@ export default function MainDashboard({ tickets, resolutions }) {
   const openTickets = totalTickets - solvedTickets
 
   const engineerPerformanceData = filteredTickets.reduce((acc, ticket) => {
-    const owner = ticket.owner.name
-    if (!acc[owner]) {
-      acc[owner] = { name: owner, solved: 0, open: 0, total: 0 }
+    const owners = ticket.owners.name
+    if (!acc[owners]) {
+      acc[owners] = { name: owners, solved: 0, open: 0, total: 0 }
     }
-    acc[owner].total += 1
+    acc[owners].total += 1
     if (ticket.resolvedOn) {
-      acc[owner].solved += 1
+      acc[owners].solved += 1
     } else {
-      acc[owner].open += 1
+      acc[owners].open += 1
     }
     return acc
   }, {})
@@ -315,7 +315,7 @@ export default function MainDashboard({ tickets, resolutions }) {
                               style={{ backgroundColor: typeColors[ticket.type], color: 'white' }}
                             />
                           </TableCell>
-                          <TableCell>{ticket.owner.name}</TableCell>
+                          <TableCell>{ticket.owners.name}</TableCell>
                           <TableCell>{new Date(ticket.reportedOn).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <Chip

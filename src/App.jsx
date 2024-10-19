@@ -2,14 +2,13 @@ import './App.css';
 import EngineersDashboard from './components/EmployeeStats';
 import TicketsDashboard from './components/TicketsStatistics';
 import MainDashboard from './components/MainDashboard';
-import CustomDashboard from './components/CustomDashboard';
-import ManagerDashboard from './components/ManagerDashboard';
+import CustomDashboard from './components/TicketsTable.jsx';
 import Sidebar from './components/Sidebar';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import TicketWorkflow from './components/TicketFlow';
 import CustomerDashboard from './components/Customer';
-import Component from './components/funnel';
+import Component from './components/funnel.jsx';
 import Sankey from './components/SankeyChart';
 
 
@@ -42,7 +41,7 @@ function App() {
   }, []);
   return (
     <Router>
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex',  background:'#F0F4F8'}}>
         <Sidebar />
         <div style={{ flexGrow: 1, marginTop: '48px' }}>
           <Routes>
@@ -50,8 +49,7 @@ function App() {
             <Route path="/main-dashboard" element={<MainDashboard  tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/ticket-dashboard" element={<TicketsDashboard tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/engineers-dashboard" element={<EngineersDashboard tickets={ticketsData} resolutions={resolutions} />} />
-            <Route path="/custom-dashboard" element={<CustomDashboard tickets={ticketsData} resolutions={resolutions} />} />
-            <Route path="/manager-dashboard" element={<ManagerDashboard tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/table-dashboard" element={<CustomDashboard tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/ticket-flow" element={<TicketWorkflow />} />
             <Route path="/customer-dashboard" element={<CustomerDashboard tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/tickets-funnel" element={<Sankey tickets={ticketsData} resolutions={resolutions} />} />

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { AlertCircle, CheckCircle, Clock, User, Tag, Calendar, Layers, Hash, MessageSquare } from 'lucide-react'
 
 const groupTickets = (tickets) => {
+  console.log(tickets, "hh")
   const root = { name: 'All Tickets', type: 'root', children: [], value: tickets.length }
 
   const tiers = {}
@@ -14,18 +15,18 @@ const groupTickets = (tickets) => {
 
   tickets.forEach((ticket) => {
     // Tier level
-    if (!tiers[ticket.tier]) {
-      tiers[ticket.tier] = { name: ticket.tier, type: 'tier', children: [], value: 0 }
-      root.children.push(tiers[ticket.tier])
+    if (!tiers[ticket.tiers]) {
+      tiers[ticket.tiers] = { name: ticket.tiers, type: 'tier', children: [], value: 0 }
+      root.children.push(tiers[ticket.tiers])
     }
-    tiers[ticket.tier].value++
+    tiers[ticket.tiers].value++
 
     // Domain level
     ticket.domains.forEach(domain => {
-      const domainKey = `${ticket.tier}-${domain.name}`
+      const domainKey = `${ticket.tiers}-${domain.name}`
       if (!domains[domainKey]) {
         domains[domainKey] = { name: domain.name, type: 'domain', children: [], value: 0 }
-        tiers[ticket.tier].children.push(domains[domainKey])
+        tiers[ticket.tiers].children.push(domains[domainKey])
       }
       domains[domainKey].value++
 
@@ -59,7 +60,7 @@ const FunnelLevel = ({ node, depth, onSelect }) => {
   return (
     <motion.div
       className="cursor-pointer rounded-lg p-4 text-center shadow-md transition-colors mx-auto"
-      style={{ 
+      style={{
         width,
         maxWidth: '70rem',
         backgroundColor: `hsl(${hue}, 70%, 90%)`,
@@ -73,6 +74,8 @@ const FunnelLevel = ({ node, depth, onSelect }) => {
     </motion.div>
   )
 }
+
+
 
 const TicketCard = ({ ticket, onClick }) => {
   const statusColor = {
@@ -129,6 +132,7 @@ export default function Component({ tickets = [], resolutions = [] }) {
       return newPath
     })
   }
+  console.log(selectedTicket)
 
   const findResolution = (ticketId) => {
     return resolutions.find(resolution => resolution.id === ticketId)
@@ -214,7 +218,8 @@ export default function Component({ tickets = [], resolutions = [] }) {
                     <div className="flex items-center">
                       <User className="w-6 h-6 mr-3 text-green-500" />
                       <span className="font-semibold">Domains:</span>
-                      <span className="ml-2">{selectedTicket.domains.map(d => d.name).join(', ')}</span>
+                      <span className="ml-2">  {selectedTicket.domains && selectedTicket.domains.map(d => d?.name || 'Unknown domain').join(', ')}
+                      </span>
                     </div>
                     <div className="flex items-center">
                       <Tag className="w-6 h-6 mr-3 text-purple-500" />
@@ -236,7 +241,7 @@ export default function Component({ tickets = [], resolutions = [] }) {
                     <div className="flex items-center">
                       <Layers className="w-6 h-6 mr-3 text-indigo-500" />
                       <span className="font-semibold">Tier:</span>
-                      <span className="ml-2">{selectedTicket.tier}</span>
+                      <span className="ml-2">{selectedTicket.tiers}</span>
                     </div>
                     <div className="flex items-center">
                       <AlertCircle className="w-6 h-6 mr-3 text-orange-500" />
@@ -245,8 +250,8 @@ export default function Component({ tickets = [], resolutions = [] }) {
                     </div>
                     <div className="flex items-center">
                       <User className="w-6 h-6 mr-3 text-teal-500" />
-                      <span className="font-semibold">owners:</span>
-                      <span className="ml-2">{selectedTicket.owners.name}</span>
+                      <span className="font-semibold">Owner:</span>
+                      <span className="ml-2">{selectedTicket.owners && selectedTicket.owners.map(d => d?.name || " ").join(', ')}</span>
                     </div>
                   </div>
                 </div>
@@ -263,12 +268,18 @@ export default function Component({ tickets = [], resolutions = [] }) {
                 <div className="mt-6">
                   <h3 className="text-xl font-semibold mb-2">Engagements</h3>
                   <div className="space-y-2">
-                    {selectedTicket.engagements.map((engagement) => (
+                    {selectedTicket.engagements?.map((engagement) => (
                       <div key={engagement.id} className="flex items-center">
                         <MessageSquare className="w-5 h-5 mr-2 text-gray-500" />
-                        <span>{engagement.action} by {engagement.members.name} on {new Date(engagement.engagedOn).toLocaleString()}</span>
+                        <span>
+                          {engagement.action ?? "No action"} by{" "}
+                          {engagement.member?.name ?? "Unknown member"} on{" "}
+                          {engagement.engagedOn
+                            ? new Date(engagement.engagedOn).toLocaleString()
+                            : "Unknown date"}
+                        </span>
                       </div>
-                    ))}
+                    )) ?? <p>No engagements available.</p>}
                   </div>
                 </div>
                 {findResolution(selectedTicket.id) && (

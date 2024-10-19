@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import {
   Box, Typography, Chip, Avatar, Grid, Paper, IconButton,
-  Tooltip, ThemeProvider, createTheme
+  Tooltip, ThemeProvider, createTheme, Zoom, Fade, Grow
 } from '@mui/material';
 import {
   BugReport, AccessTime, CheckCircle, Error, Label, Person,
@@ -31,7 +31,23 @@ const theme = createTheme({
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: 12,
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'linear-gradient(to bottom right, #ffffff, #f0f0f0)',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 16,
+        },
+      },
+    },
   },
 });
 
@@ -63,61 +79,59 @@ const engagementIcons = {
   CustomerFollowUp: <Phone />,
 };
 
-
-
 const InfoCard = ({ title, children, icon }) => {
-  const [expanded, setExpanded] = useState(true);
-
 
   return (
-    <MotionPaper
-      elevation={3}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      sx={{
-        p: 3,
-        height: expanded ? 'auto' : '300px',
-        overflow: 'hidden',
-        position: 'relative'
-      }}
-    >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-          {React.cloneElement(icon, { sx: { mr: 1 } })}
-          {title}
-        </Typography>
-
-      </Box>
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          {children}
-        </motion.div>
-      </AnimatePresence>
-    </MotionPaper>
+    <Grow in={true} timeout={800}>
+      <MotionPaper
+        elevation={6}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        sx={{
+          p: 3,
+          height: 'auto' ,
+          overflow: 'hidden',
+          position: 'relative',
+          borderRadius: 4,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', color: 'primary.main' }}>
+            {React.cloneElement(icon, { sx: { mr: 1, fontSize: 28 } })}
+            {title}
+          </Typography>
+          
+        </Box>
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      </MotionPaper>
+    </Grow>
   );
 };
-// props validation for info card
+
 InfoCard.propTypes = {
   title: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
   icon: PropTypes.node.isRequired,
 };
+
 export default function EnhancedTicketWorkflow() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const location = useLocation();
-  const { selectedTicket, ticketResolutions } = location.state || {}; // Ensure location.state is defined
-  console.log(selectedTicket, ticketResolutions);
-  // Default resolution if not available
+  const { selectedTicket, ticketResolutions } = location.state || {};
   const firstResolution = ticketResolutions?.[0] || {};
   const hasResolutions = ticketResolutions && ticketResolutions.length > 0;
 
   const timelineEvents = [
-    { date: firstResolution.firstSeen || new Date(), title: "Incident First Seen", icon: <Error />, color: theme.palette.error.main },
     { date: selectedTicket.reportedOn || new Date(), title: "Ticket Reported", icon: <BugReport />, color: theme.palette.primary.main },
     ...selectedTicket.engagements.map(eng => ({
       date: eng.engagedOn || new Date(),
@@ -125,31 +139,29 @@ export default function EnhancedTicketWorkflow() {
       description: eng.message,
       icon: engagementIcons[eng.action] || <AccessTime />,
       color: theme.palette.secondary.main,
-      members: eng.members[0]?.name || 'Unknown' // Handle potential undefined members
+      members: eng.members[0]?.name || 'Unknown'
     })),
-    { date: firstResolution.lastSeen || new Date(), title: "Incident Last Seen", icon: <Error />, color: theme.palette.error.main },
-];
+  ];
 
-// Check if the ticket has been resolved before adding the "Ticket Resolved" event
-if (selectedTicket.resolvedOn) {
-  timelineEvents.push({
-    date: selectedTicket.resolvedOn,
-    title: "Ticket Resolved",
-    icon: <CheckCircle />,
-    color: theme.palette.success.main,
-  });
-}
+  if (selectedTicket.resolvedOn) {
+    timelineEvents.push({
+      date: selectedTicket.resolvedOn,
+      title: "Ticket Resolved",
+      icon: <CheckCircle />,
+      color: theme.palette.success.main,
+    });
+  }
 
-// Sort the timeline events after potentially adding the resolved event
-timelineEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-
+  timelineEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ maxWidth: 1200, margin: 'auto', p: 4, bgcolor: 'background.default' }}>
-        <Typography variant="h3" gutterBottom align="center" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-          Ticket Workflow Visualization
-        </Typography>
+        <Fade in={true} timeout={1000}>
+          <Typography variant="h3" gutterBottom align="center" sx={{ fontWeight: 'bold', color: 'primary.main', textShadow: '2px 2px 4px rgba(0,0,0,0.1)' }}>
+            Ticket Workflow Visualization
+          </Typography>
+        </Fade>
 
         <Grid container spacing={4}>
           <Grid item xs={12} md={4}>
@@ -179,21 +191,20 @@ timelineEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
               <Box mt={2}>
                 <Typography variant="subtitle2" >Tags:</Typography>
                 {selectedTicket?.tags?.map((tag, index) => (
-                  <Chip
-                    key={index}
-                    label={tag.label}
-                    icon={<Label />}
-                    size="small"
-                    variant="outlined"
-                    sx={{ m: 0.5 }}
-                    color="secondary"
-
-                  />
+                  <Tooltip title={tag.label} key={index}>
+                    <Chip
+                      label={tag.label}
+                      icon={<Label />}
+                      size="small"
+                      variant="outlined"
+                      sx={{ m: 0.5 }}
+                      color="secondary"
+                    />
+                  </Tooltip>
                 )) || 'No tags'}
               </Box>
             </InfoCard>
           </Grid>
-
 
           <Grid item xs={12} md={4}>
             <InfoCard title="Incident Information" icon={<Error />}>
@@ -211,15 +222,15 @@ timelineEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
               <Box mt={2}>
                 <Typography variant="subtitle2">Involved Members:</Typography>
                 {firstResolution.members?.map((members, index) => (
-                  <Chip
-                    key={index}
-                    avatar={<Avatar>{members.name[0]}</Avatar>}
-                    label={members.name}
-                    variant="outlined"
-                    sx={{ m: 0.5 }}
-                    color="primary"
-
-                  />
+                  <Tooltip title={members.name} key={index}>
+                    <Chip
+                      avatar={<Avatar>{members.name[0]}</Avatar>}
+                      label={members.name}
+                      variant="outlined"
+                      sx={{ m: 0.5 }}
+                      color="primary"
+                    />
+                  </Tooltip>
                 )) || 'No members involved'}
               </Box>
             </InfoCard>
@@ -228,37 +239,39 @@ timelineEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
           <Grid item xs={12} md={4}>
             <InfoCard title="Domains Affected" icon={<Person />}>
               {selectedTicket?.domains?.map((domain, index) => (
-                <Chip
-                  key={index}
-                  label={domain.name}
-                  icon={<Person />}
-                  variant="outlined"
-                  sx={{ m: 0.5 }}
-                  color="primary"
-
-                />
+                <Tooltip title={domain.name} key={index}>
+                  <Chip
+                    label={domain.name}
+                    icon={<Person />}
+                    variant="outlined"
+                    sx={{ m: 0.5 }}
+                    color="primary"
+                  />
+                </Tooltip>
               )) || 'No affected domains'}
             </InfoCard>
           </Grid>
         </Grid>
+
         <Grid className='mt-4'>
           <InfoCard title="Solutions and Root Causes" icon={<Lightbulb />}>
-            {/* New Section for Solution and Root Cause */}
             <Box mt={2}>
-            {hasResolutions && firstResolution.solutions?.map((solution, index) => (
-                <Paper key={index} elevation={1} sx={{ p: 2, mb: 1 }}>
-                  <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold' }}>Root Cause {index + 1}:</Typography>
-                  <Typography variant="body2" color="text.secondary">{solution.rootCause}</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Solution :</Typography>
-                  <Typography variant="body2" color="text.secondary">{solution.solution}</Typography>
-                </Paper>
+              {hasResolutions && firstResolution.solutions?.map((solution, index) => (
+                <Zoom in={true} style={{ transitionDelay: `${index * 150}ms` }} key={index}>
+                  <Paper elevation={3} sx={{ p: 2, mb: 2, borderLeft: `4px solid ${theme.palette.primary.main}` }}>
+                    <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold', color: 'primary.main' }}>Root Cause {index + 1}:</Typography>
+                    <Typography variant="body2" color="text.secondary">{solution.rootCause}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'secondary.main', mt: 1 }}>Solution:</Typography>
+                    <Typography variant="body2" color="text.secondary">{solution.solution}</Typography>
+                  </Paper>
+                </Zoom>
               )) || 'No solutions available'}
             </Box>
           </InfoCard>
         </Grid>
 
-        <MotionPaper elevation={3} sx={{ mt: 4, p: 3 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+        <MotionPaper elevation={6} sx={{ mt: 4, p: 3, borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', color: 'primary.main' }}>
             <TimelineIcon sx={{ mr: 1 }} />
             Ticket Timeline
           </Typography>
@@ -273,33 +286,37 @@ timelineEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
                     {index < timelineEvents.length - 1 && <TimelineConnector />}
                   </TimelineSeparator>
                   <TimelineContent>
-                    <MotionPaper
-                      elevation={3}
-                      sx={{
-                        p: 2,
-                        bgcolor: 'background.paper',
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                    >
-                      <Typography variant="h6" component="div" sx={{ color: event.color }}>
-                        {event.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {new Date(event.date).toLocaleString()}
-                      </Typography>
-                      {event.description && (
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          {event.description}
+                    <Grow in={true} style={{ transformOrigin: '0 0 0' }} timeout={1000}>
+                      <MotionPaper
+                        elevation={3}
+                        sx={{
+                          p: 2,
+                          bgcolor: 'background.paper',
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease-in-out',
+                          
+                        }}
+                        onClick={() => setSelectedEvent(event)}
+                      >
+                        <Typography variant="h6" component="div" sx={{ color: event.color }}>
+                          {event.title}
                         </Typography>
-                      )}
-                      {event.members && (
-                        <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
-                          by: {event.members}
+                        <Typography variant="body2" color="text.secondary">
+                          {new Date(event.date).toLocaleString()}
                         </Typography>
-                      )}
-                    </MotionPaper>
+                        {event.description && (
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            {event.description}
+                          </Typography>
+                        )}
+                        {event.members && (
+                          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+                            by: {event.members}
+                          </Typography>
+                        )}
+                      </MotionPaper>
+                    </Grow>
                   </TimelineContent>
                 </TimelineItem>
               ))}

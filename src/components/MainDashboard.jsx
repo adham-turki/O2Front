@@ -1,346 +1,105 @@
-'use client'
 
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom';
-import {
-  AppBar,
-  Typography,
-  Container,
-  Grid,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Avatar,
-  Box,
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+import  { useState, useMemo } from 'react'
+import {Box,Container,Typography,Tab,Tabs,styled,useTheme,Select,MenuItem,FormControl,InputLabel,
 } from '@mui/material'
-import {
-  ResponsiveContainer,
-  Tooltip,
-  Legend,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from 'recharts'
-import { motion } from 'framer-motion'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import ErrorIcon from '@mui/icons-material/Error'
-import BugReportIcon from '@mui/icons-material/BugReport'
-import NewReleasesIcon from '@mui/icons-material/NewReleases'
-import AssignmentIcon from '@mui/icons-material/Assignment'
-import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber'
-import DoneAllIcon from '@mui/icons-material/DoneAll'
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
+import { TrendingUp,Engineering,BugReport,FilterList,Business} from '@mui/icons-material'
+import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
+import TicketsDashboard from './TicketsStatistics'
+import EngineersDashboard from './EmployeeStats'
+import ResolutionsDashboard from './ResolutionsDashboard'
+import CustomerDashboard from './Customer'
+import PropTypes from 'prop-types'
 
-const priorityColors = {
-  Low: '#4CAF50',
-  Medium: '#FFC107',
-  High: '#FF9800',
-  Highest: '#F44336',
-}
-
-const typeColors = {
-  BUG: '#FF5722',
-  FEATURE: '#2196F3',
-  SUPPORT: '#9C27B0',
-}
-
-const typeIcons = {
-  BUG: <BugReportIcon />,
-  FEATURE: <NewReleasesIcon />,
-  SUPPORT: <AssignmentIcon />,
-}
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#3f51b5',
-    },
-    secondary: {
-      main: '#f50057',
-    },
+const StyledSelect = styled(Select)(({ theme }) => ({
+  minWidth: 200,
+  '& .MuiSelect-select': {
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
   },
-  typography: {
-    fontFamily: 'Roboto, sans-serif',
-  },
-})
-
-const StyledPaper = motion(Paper)
-
-const AnimatedTypography = motion(Typography)
-
-const AnimatedNumber = ({ value }) => {
-  const [displayValue, setDisplayValue] = useState(0)
-
-  useEffect(() => {
-    if (value === 0) {
-      setDisplayValue(0)
-      return
-    }
-
-    let start = 0
-    const end = parseInt(value)
-    const duration = 2000
-    let timer = setInterval(() => {
-      start += 1
-      setDisplayValue(start)
-      if (start === end) clearInterval(timer)
-    }, duration / end)
-
-    return () => clearInterval(timer)
-  }, [value])
-
-  return <span>{displayValue}</span>
-}
+}))
 
 export default function MainDashboard({ tickets, resolutions }) {
-  const [timeRange, setTimeRange] = useState('all')
-  const [filteredTickets, setFilteredTickets] = useState(tickets)
-  const navigate = useNavigate();
+  const [tabValue, setTabValue] = useState(0)
+  const [dateRange, setDateRange] = useState('all')
+  const theme = useTheme()
 
-  useEffect(() => {
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue)
+  }
+
+  const filteredTickets = useMemo(() => {
+    if (dateRange === 'all') return tickets
+
     const now = new Date()
-    const filtered = tickets.filter((ticket) => {
-      const ticketDate = new Date(ticket.reportedOn)
-      switch (timeRange) {
-        case 'week':
-          return now - ticketDate <= 7 * 24 * 60 * 60 * 1000
-        case 'month':
-          return now - ticketDate <= 30 * 24 * 60 * 60 * 1000
-        case '6months':
-          return now - ticketDate <= 180 * 24 * 60 * 60 * 1000
-        case 'year':
-          return now - ticketDate <= 365 * 24 * 60 * 60 * 1000
-        default:
-          return true
-      }
-    })
-    setFilteredTickets(filtered)
-  }, [timeRange, tickets])
+    const filterDate = {
+      'last-week': subDays(now, 7),
+      'last-month': subMonths(now, 1),
+      'last-6-months': subMonths(now, 6),
+      'last-year': subYears(now, 1)
+    }[dateRange]
 
-  const totalTickets = filteredTickets.length
-  const solvedTickets = filteredTickets.filter((ticket) => ticket.resolvedOn).length
-  const openTickets = totalTickets - solvedTickets
-
-  const engineerPerformanceData = filteredTickets.reduce((acc, ticket) => {
-    const owners = ticket.owners
-    owners.map(owner => {
-    
-      try {
-        
-        acc[owner.name].total += 1  
-        if (ticket.resolvedOn) {
-          acc[owner.name].solved += 1
-        } else {
-          acc[owner.name].open += 1
-        }
-      } catch (error) {
-          acc[owner.name] = { name: owner.name, solved: 0, open: 0, total: 0 }
-        
-      }
-    })
-    return acc
-   
-  }, {})
-
-  const topEngineers = Object.values(engineerPerformanceData)
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5)
-
-    const handleRowClick = (ticketId) => {
-      // Find the selected ticket based on the ticketId
-      const selectedTicket = tickets.find(ticket => ticket.id === ticketId);
-    
-      // Filter the resolutions where the tickets array contains the ticketId
-      const ticketResolutions = resolutions.filter(resolution => 
-        resolution.tickets.some(ticket => ticket.id === ticketId)
-      );
-    
-     
-    
-      // Navigate to the ticket-flow page and pass the selected ticket and its resolutions
-      navigate('/ticket-flow', { state: { selectedTicket, ticketResolutions } });
-    };
-    
+    return tickets.filter(ticket => isAfter(parseISO(ticket.reportedOn), filterDate))
+  }, [tickets, dateRange])
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ flexGrow: 1, bgcolor: 'background.default' }}>
-        <AppBar position="static"></AppBar>
-        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel id="time-range-label">Time Range</InputLabel>
-                <Select
-                  labelId="time-range-label"
-                  id="time-range-select"
-                  value={timeRange}
-                  label="Time Range"
-                  onChange={(e) => setTimeRange(e.target.value)}
-                >
-                  <MenuItem value="all">All Time</MenuItem>
-                  <MenuItem value="week">Last Week</MenuItem>
-                  <MenuItem value="month">Last Month</MenuItem>
-                  <MenuItem value="6months">Last 6 Months</MenuItem>
-                  <MenuItem value="year">Last Year</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            {/* Summary Cards */}
-            {[
-              { title: 'Total Tickets', value: totalTickets, color: "#6200EA", icon: <ConfirmationNumberIcon sx={{ fontSize: 40 }} /> },
-              { title: 'Solved Tickets', value: solvedTickets, color: "#00C853", icon: <DoneAllIcon sx={{ fontSize: 40 }} /> },
-              { title: 'Open Tickets', value: openTickets, color: "#FF6D00", icon: <ErrorOutlineIcon sx={{ fontSize: 40 }} /> },
-            ].map((item, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <StyledPaper
-                  elevation={3}
-                  whileHover={{ scale: 1.05 }}
-                  sx={{
-                    p: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: 140,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    background: `linear-gradient(45deg, #7E57C2 30%, #5E35B1 90%)`,
-                    color: 'white',
-                    borderRadius: 4,
-                  }}
-                >
-                  {item.icon}
-                  <AnimatedTypography
-                    component="h2"
-                    variant="h6"
-                    color="inherit"
-                    gutterBottom
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    {item.title}
-                  </AnimatedTypography>
-                  <AnimatedTypography
-                    component="p"
-                    variant="h4"
-                    color="inherit"
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <AnimatedNumber value={item.value} />
-                  </AnimatedTypography>
-                </StyledPaper>
-              </Grid>
-            ))}
+    <Box sx={{ display: 'flex' }} className='shadow-xl'>
+      <Container maxWidth="xl" sx={{ flexGrow: 1 }}>
+        <Typography variant="h3" gutterBottom sx={{ my: 4 , fontWeight: '', color: "#3f51b5", textAlign: 'center' }}>
+          Analyitics Dashboard
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange}
+            sx={{ 
+              '& .MuiTab-root': { 
+                fontWeight: 'bold',
+                fontSize: '1rem',
+              },
+            }}
+          >
+            <Tab icon={<TrendingUp />} label="Overview" />
+            <Tab icon={<Engineering />} label="Engineer Performance" />
+            <Tab icon={<BugReport />} label="Resolutions Analysis" />
+            <Tab icon={<Business />} label="Domains" />
+          </Tabs>
+          <FormControl variant="outlined">
+            <InputLabel id="date-range-label">Date Range</InputLabel>
+            <StyledSelect
+              labelId="date-range-label"
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              label="Date Range"
+              startAdornment={<FilterList sx={{ color: 'action.active', mr: 1, my: 0.5 }} />}
+            >
+              <MenuItem value="all">All Time</MenuItem>
+              <MenuItem value="last-week">Last Week</MenuItem>
+              <MenuItem value="last-month">Last Month</MenuItem>
+              <MenuItem value="last-6-months">Last 6 Months</MenuItem>
+              <MenuItem value="last-year">Last Year</MenuItem>
+            </StyledSelect>
+          </FormControl>
+        </Box>
 
-            {/* Top Engineers Radar Chart */}
-            <Grid item xs={12}>
-              <StyledPaper
-                elevation={3}
-                whileHover={{ scale: 1.02 }}
-                sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 500 }}
-              >
-                <Typography component="h2" variant="h6" color="primary" gutterBottom>
-                  Top Engineers Performance
-                </Typography>
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={topEngineers}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="name" />
-                    <PolarRadiusAxis />
-                    <Radar name="Solved Tickets" dataKey="solved" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                    <Radar name="Open Tickets" dataKey="open" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
-                    <Legend />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </StyledPaper>
-            </Grid>
+        {tabValue === 0 && (
+          <TicketsDashboard tickets={filteredTickets} resolutions={resolutions} />
+        )}
+        {tabValue === 1 && (
+          <EngineersDashboard tickets={filteredTickets} resolutions={resolutions} />
+        )}
 
-            {/* Enhanced Ticket Table */}
-            <Grid item xs={12}>
-              <StyledPaper
-                elevation={3}
-                sx={{ p: 2, display: 'flex', flexDirection: 'column' }}
-              >
-                <Typography component="h2" variant="h6" color="primary" gutterBottom>
-                  All Tickets
-                </Typography>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>ID</TableCell>
-                        <TableCell>Issue</TableCell>
-                        <TableCell>Severity</TableCell>
-                        <TableCell>Type</TableCell>
-                        <TableCell>On Call</TableCell>
-                        <TableCell>Date Opened</TableCell>
-                        <TableCell>Status</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredTickets.map((ticket) => (
-                        <TableRow
-                          key={ticket.id}
-                          onClick={() => handleRowClick(ticket.id)}
-                          style={{ cursor: 'pointer' }}
-                          hover
-                        >
-                          <TableCell>{ticket.id}</TableCell>
-                          <TableCell>{ticket.title}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={ticket.severity}
-                              style={{
-                                backgroundColor: priorityColors[ticket.priority],
-                                color: 'white',
-                                fontWeight: 'bold'
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              icon={typeIcons[ticket.type]}
-                              label={ticket.type}
-                              style={{ backgroundColor: typeColors[ticket.type], color: 'white' }}
-                            />
-                          </TableCell>
-                          <TableCell>{ticket.owners.name}</TableCell>
-                          <TableCell>{new Date(ticket.reportedOn).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <Chip
-                              icon={ticket.resolvedOn ? <CheckCircleIcon /> : <ErrorIcon />}
-                              label={ticket.resolvedOn ? "Solved" : "Open"}
-                              color={ticket.resolvedOn ? "success" : "error"}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </StyledPaper>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
-    </ThemeProvider>
+        {tabValue === 2 && (
+          <ResolutionsDashboard resolutions={resolutions} />
+        )}
+          {tabValue === 3 && (
+          <CustomerDashboard tickets={filteredTickets} resolutions={resolutions}/>
+        )}
+      </Container>
+
+    </Box>
   )
 }
+MainDashboard.propTypes = {
+  tickets: PropTypes.array.isRequired,
+  resolutions: PropTypes.array.isRequired,
+};

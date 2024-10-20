@@ -1,9 +1,8 @@
-'use client'
 
-import React, { useState, useEffect } from 'react'
+import  { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AlertCircle, CheckCircle, Clock, User, Tag, Calendar, Layers, Hash, MessageSquare } from 'lucide-react'
-
+import { AlertCircle, Clock, User, Tag, Calendar, Layers, Hash, MessageSquare } from 'lucide-react'
+import PropTypes from 'prop-types'
 const groupTickets = (tickets) => {
   console.log(tickets, "hh")
   const root = { name: 'All Tickets', type: 'root', children: [], value: tickets.length }
@@ -74,6 +73,11 @@ const FunnelLevel = ({ node, depth, onSelect }) => {
     </motion.div>
   )
 }
+FunnelLevel.propTypes = {
+  node: PropTypes.object.isRequired,
+  depth: PropTypes.number.isRequired,
+  onSelect: PropTypes.func.isRequired
+}
 
 
 
@@ -84,7 +88,10 @@ const TicketCard = ({ ticket, onClick }) => {
     'INV': 'bg-purple-100 text-purple-800',
     'RESOLVED': 'bg-green-100 text-green-800',
   }[ticket.ticketStatus] || 'bg-gray-100 text-gray-800'
-
+TicketCard.propTypes = {
+  ticket: PropTypes.object.isRequired,
+  onClick: PropTypes.func.isRequired
+}
   return (
     <motion.div
       className="bg-white p-6 rounded-lg shadow-lg cursor-pointer"
@@ -114,7 +121,7 @@ const TicketCard = ({ ticket, onClick }) => {
   )
 }
 
-export default function Component({ tickets = [], resolutions = [] }) {
+export default function Component({ tickets , resolutions }) {
   const [groupedTickets, setGroupedTickets] = useState(null)
   const [selectedPath, setSelectedPath] = useState([])
   const [selectedTicket, setSelectedTicket] = useState(null)
@@ -310,4 +317,8 @@ export default function Component({ tickets = [], resolutions = [] }) {
       </div>
     </div>
   )
+}
+Component.propTypes = {
+  tickets: PropTypes.array.isRequired,
+  resolutions: PropTypes.array.isRequired
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  Box, Typography, Grid, Paper, CircularProgress, List, ListItem, ListItemText,
+  Box, Typography, Grid,  CircularProgress, List, ListItem, ListItemText,
   ListItemAvatar, Avatar, createTheme, ThemeProvider, styled, CssBaseline,SvgIcon 
 } from '@mui/material'
 import {
@@ -9,6 +9,8 @@ import {
 } from 'recharts'
 import ForceGraph2D from 'react-force-graph-2d'
 import { EmojiEvents, Speed, Radar as RadarIcon, Group, EmojiPeople } from '@mui/icons-material';
+import PropTypes from 'prop-types'
+import { StyledPaper } from './StyledPaper';
 
 
 const COLORS = [
@@ -42,24 +44,15 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 16,
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
           transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-          '&:hover': {
-            transform: 'translateY(-5px)',
-            boxShadow: '0 15px 35px rgba(0, 0, 0, 0.15)',
-          },
+          boxShadow: '0 15px 35px rgba(0, 0, 0, 0.15)',
         },
       },
     },
   },
 })
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-}))
+
 
 const ChartTitle = styled(Typography)(({ theme }) => ({
   marginBottom: theme.spacing(2),
@@ -84,6 +77,10 @@ const AnimatedNumber = ({ value }) => {
   }, [value])
 
   return <span>{displayValue}</span>
+}
+//add props validation for AnimatedNumber
+AnimatedNumber.propTypes = {
+  value: PropTypes.number.isRequired,
 }
 
 const LeaderboardItem = styled(ListItem)(({ theme }) => ({
@@ -205,6 +202,10 @@ export default function EngineersDashboard({ tickets, resolutions }) {
       <span className='text-[#2a2a2a]'>{title }</span>
     </ChartTitle>
   );
+  ChartTitleWithIcon.propTypes = {
+    title: PropTypes.string.isRequired,
+    icon: PropTypes.elementType.isRequired,
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -335,4 +336,9 @@ export default function EngineersDashboard({ tickets, resolutions }) {
       </Box>
     </ThemeProvider>
   )
+}
+//add props validation for EngineersDashboard
+EngineersDashboard.propTypes = {
+  tickets: PropTypes.array.isRequired,
+  resolutions: PropTypes.array.isRequired,
 }

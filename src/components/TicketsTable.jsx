@@ -1,6 +1,5 @@
-'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import  { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Typography,
@@ -46,6 +45,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import DoneAllIcon from '@mui/icons-material/DoneAll'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
 import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
+import PropTypes from 'prop-types'
 
 const StyledSelect = styled(Select)(({ theme }) => ({
   minWidth: 200,
@@ -152,6 +152,9 @@ const AnimatedNumber = ({ value }) => {
 
   return <span>{displayValue}</span>
 }
+AnimatedNumber.propTypes = {
+  value: PropTypes.number.isRequired,
+}
 
 const TopicCard = ({ icon, title, value, color }) => (
   <Card sx={{ bgcolor: color, color: 'white' }}>
@@ -168,7 +171,12 @@ const TopicCard = ({ icon, title, value, color }) => (
     </CardContent>
   </Card>
 )
-
+TopicCard.propTypes = {
+  icon: PropTypes.node.isRequired,
+  title: PropTypes.string.isRequired,
+  value: PropTypes.number.isRequired,
+  color: PropTypes.string.isRequired,
+}
 const ProgressCard = ({ title, value, total, color }) => (
   <Card>
     <CardContent>
@@ -201,8 +209,14 @@ const ProgressCard = ({ title, value, total, color }) => (
     </CardContent>
   </Card>
 )
+ProgressCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  value: PropTypes.number.isRequired,
+  total: PropTypes.number.isRequired,
+  color: PropTypes.string.isRequired,
+}
 
-export default function CustomDashboard({ tickets = [], resolutions = [] }) {
+export default function CustomDashboard({ tickets, resolutions  }) {
   const [timeRange, setTimeRange] = useState('all')
   const navigate = useNavigate()
 
@@ -438,4 +452,8 @@ export default function CustomDashboard({ tickets = [], resolutions = [] }) {
       </Box>
     </ThemeProvider>
   )
+}
+CustomDashboard.propTypes = {
+  tickets: PropTypes.array.isRequired,
+  resolutions: PropTypes.array.isRequired
 }

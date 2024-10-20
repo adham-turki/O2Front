@@ -6,10 +6,14 @@ export default function SankeyChart() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch('http://localhost:1337/api/tickets');
-      const data = await response.json();
-      setTickets(data.data);
-      console.log("Tickets data:", data);
+      try {
+        const response = await fetch('http://localhost:1337/api/tickets');
+        const data = await response.json();
+        setTickets(data.data || []); // Ensure data is an array
+        console.log("Tickets data:", data);
+      } catch (error) {
+        console.error("Error fetching tickets:", error);
+      }
     };
     fetchData();
   }, []);
@@ -20,52 +24,69 @@ export default function SankeyChart() {
   ];
 
   tickets.forEach((ticket) => {
-    // Add connections and tooltips
-    sankeyData.push([
-      "All Tickets",
-      ticket.severity,
-      2,
-      `Ticket: ${ticket.title}`, // Tooltip shows ticket title
-    ]);
+    const { severity, type, domains, tags, title, tier, reportedBy } = ticket || {};
 
-    sankeyData.push([
-      ticket.severity,
-      ticket.type,
-      1,
-      `Ticket: ${ticket.title}`, // Tooltip shows ticket title
-    ]);
-
-    ticket.domains.forEach((domain) => {
+    // Check for missing or null values before pushing to sankeyData
+    if (severity && type && title) {
+      // Add connections and tooltips
       sankeyData.push([
-        ticket.type,
-        domain.name,
-        1,
-        `Ticket: ${ticket.title}`, // Tooltip for domain connection
+        "All Tickets",
+        severity,
+        2,
+        `Ticket: ${title}`, // Tooltip shows ticket title
       ]);
 
       sankeyData.push([
-        domain.name,
-        ticket.tier,
+        severity,
+        type,
         1,
-        `Ticket: ${ticket.title}`, // Tooltip for tier connection
+        `Ticket: ${title}`, // Tooltip shows ticket title
       ]);
-    });
+    }
 
-    ticket.tags.forEach((tag) => {
-      sankeyData.push([
-        ticket.tier,
-        tag.label,
-        1,
-        `Ticket: ${ticket.title}`, // Tooltip for tag connection
-      ]);
+    if (domains && Array.isArray(domains)) {
+      domains.forEach((domain) => {
+        if (domain && domain.name && type) {
+          sankeyData.push([
+            type,
+            domain.name,
+            1,
+            `Ticket: ${title}`, // Tooltip for domain connection
+          ]);
 
-      sankeyData.push([
-        tag.label,
-        ticket.reportedBy.name,
-        1,
-        `Ticket: ${ticket.title}`, // Tooltip for reporter connection
-      ]);
-    });
+          if (tier) {
+            sankeyData.push([
+              domain.name,
+              tier,
+              1,
+              `Ticket: ${title}`, // Tooltip for tier connection
+            ]);
+          }
+        }
+      });
+    }
+
+    if (tags && Array.isArray(tags)) {
+      tags.forEach((tag) => {
+        if (tag && tag.label && tier) {
+          sankeyData.push([
+            tier,
+            tag.label,
+            1,
+            `Ticket: ${title}`, // Tooltip for tag connection
+          ]);
+
+          if (reportedBy && reportedBy.name) {
+            sankeyData.push([
+              tag.label,
+              reportedBy.name,
+              1,
+              `Ticket: ${title}`, // Tooltip for reporter connection
+            ]);
+          }
+        }
+      });
+    }
   });
 
   // Sankey chart options

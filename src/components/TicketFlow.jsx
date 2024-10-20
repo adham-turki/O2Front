@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import {
-  Box, Typography, Chip, Avatar, Grid, Paper, IconButton,
+  Box, Typography, Chip, Avatar, Grid, Paper,
   Tooltip, ThemeProvider, createTheme, Zoom, Fade, Grow
 } from '@mui/material';
 import {
   BugReport, AccessTime, CheckCircle, Error, Label, Person,
   Timeline as TimelineIcon, Lightbulb, Speed, PriorityHigh,
-  Chat, Assignment, ExpandMore, ExpandLess,
+   Assignment, 
   TouchApp, Update, ArrowUpward, ReportProblem, AssignmentTurnedIn,
   AssignmentInd, EmojiObjects, Phone
 } from '@mui/icons-material';
@@ -51,7 +51,6 @@ const theme = createTheme({
   },
 });
 
-const MotionBox = motion(Box);
 const MotionPaper = motion(Paper);
 
 const severityColors = {
@@ -125,7 +124,6 @@ InfoCard.propTypes = {
 };
 
 export default function EnhancedTicketWorkflow() {
-  const [selectedEvent, setSelectedEvent] = useState(null);
   const location = useLocation();
   const { selectedTicket, ticketResolutions } = location.state || {};
   const firstResolution = ticketResolutions?.[0] || {};
@@ -297,7 +295,6 @@ export default function EnhancedTicketWorkflow() {
                           transition: 'all 0.3s ease-in-out',
                           
                         }}
-                        onClick={() => setSelectedEvent(event)}
                       >
                         <Typography variant="h6" component="div" sx={{ color: event.color }}>
                           {event.title}

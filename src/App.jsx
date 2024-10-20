@@ -8,7 +8,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import { useEffect, useState } from 'react';
 import TicketWorkflow from './components/TicketFlow';
 import CustomerDashboard from './components/Customer';
-import Component from './components/funnel.jsx';
+import Component from './components/AdvancedFunnel.jsx';
 import Sankey from './components/SankeyChart';
 
 

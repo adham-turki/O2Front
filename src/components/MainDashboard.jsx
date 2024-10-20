@@ -1,6 +1,6 @@
 
 import  { useState, useMemo } from 'react'
-import {Box,Container,Typography,Tab,Tabs,styled,useTheme,Select,MenuItem,FormControl,InputLabel,
+import {Box,Container,Typography,Tab,Tabs,styled,Select,MenuItem,FormControl,InputLabel,
 } from '@mui/material'
 import { TrendingUp,Engineering,BugReport,FilterList,Business} from '@mui/icons-material'
 import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
@@ -21,7 +21,6 @@ const StyledSelect = styled(Select)(({ theme }) => ({
 export default function MainDashboard({ tickets, resolutions }) {
   const [tabValue, setTabValue] = useState(0)
   const [dateRange, setDateRange] = useState('all')
-  const theme = useTheme()
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue)

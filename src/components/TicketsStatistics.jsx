@@ -1,26 +1,28 @@
-import  { useState, useEffect } from 'react';
-import { 
-  Box, Typography, Grid, Paper, CircularProgress, 
-  ThemeProvider, createTheme, styled, Card, CardContent, SvgIcon
+import { useState, useEffect } from 'react';
+import {
+  Box, Typography, Grid, CircularProgress,
+  ThemeProvider, createTheme, CardContent, SvgIcon
 } from '@mui/material';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, Line, LineChart,
 } from 'recharts';
-import { 
+import {
   BarChart as BarChartIcon,
   CheckCircle,
   ErrorOutline,
   AccessTime,
-  PieChart as PieChartIcon,
   GppGood,
-  Timeline,
   BugReport,
   TrendingUp,
   Speed,
   EmojiEvents,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import PropTypes from 'prop-types';
+import { StyledPaperForTickets as StyledPaper } from './StyledPaper';
+import { StyledCardFortickets as StyledCard } from './StyledCards';
+
 
 const theme = createTheme({
   palette: {
@@ -39,33 +41,14 @@ const theme = createTheme({
 // Custom SVG icon for Monthly Ticket Trends
 const CalendarChartIcon = (props) => (
   <SvgIcon {...props}>
-    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-    <path d="M5 21h14c1.1 0 2-.9 2-2V8H3v11c0 1.1.89 2 2 2zM7 10h5v5H7v-5z"/>
-    <path d="M15 13h2v2h-2zm0-3h2v2h-2z"/>
+    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
+    <path d="M5 21h14c1.1 0 2-.9 2-2V8H3v11c0 1.1.89 2 2 2zM7 10h5v5H7v-5z" />
+    <path d="M15 13h2v2h-2zm0-3h2v2h-2z" />
   </SvgIcon>
 );
 
 const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F3A683', '#F7D794', '#778BEB', '#786FA6', '#F8A5C2'];
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  borderRadius: 10,
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-    boxShadow: theme.shadows[10],
-}));
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: 10,
-  background: 'rgba(255, 255, 255, 0.8)',
-  backdropFilter: 'blur(10px)',
-  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-    boxShadow: theme.shadows[10],
-  
-}));
 
 const AnimatedNumber = ({ value }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -85,6 +68,10 @@ const AnimatedNumber = ({ value }) => {
 
   return <span>{displayValue}</span>;
 };
+AnimatedNumber.propTypes = {
+  value: PropTypes.number.isRequired,
+};
+
 
 export default function TicketsDashboard({ tickets, resolutions }) {
   const [loading, setLoading] = useState(true);
@@ -115,6 +102,10 @@ export default function TicketsDashboard({ tickets, resolutions }) {
       {title}
     </Typography>
   );
+  TitleWithIcon1.propTypes = {
+    title: PropTypes.string.isRequired,
+    icon: PropTypes.node.isRequired,
+  };
 
   // Data processing functions
   const processTicketStats = () => {
@@ -204,6 +195,10 @@ export default function TicketsDashboard({ tickets, resolutions }) {
       {title}
     </Typography>
   );
+  TitleWithIcon.propTypes = {
+    title: PropTypes.string.isRequired,
+    icon: PropTypes.node.isRequired,
+  };
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ flexGrow: 1, bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
@@ -232,28 +227,26 @@ export default function TicketsDashboard({ tickets, resolutions }) {
               </motion.div>
             </Grid>
           ))}
-          <Grid item xs={12}>
-            
+          <Grid item xs={12} md={6}>
             <StyledPaper elevation={3}>
-            <TitleWithIcon1 title={cardTitles[0].title} icon={cardTitles[0].icon} />
-            <ResponsiveContainer width="100%" height={400}>
+              <TitleWithIcon title={cardTitles[0].title} icon={cardTitles[0].icon} />
+              <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
-                  <YAxis yAxisId="left" orientation="left" stroke={theme.palette.primary.main} />
-                  <YAxis yAxisId="right" orientation="right" stroke={theme.palette.secondary.main} />
+                  <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar yAxisId="left" dataKey="opened" fill={theme.palette.primary.light} name="Tickets Opened" />
-                  <Bar yAxisId="left" dataKey="resolved" fill={theme.palette.primary.dark} name="Tickets Resolved" />
-                  <Line yAxisId="right" type="monotone" dataKey="resolutionRate" stroke={theme.palette.secondary.main} name="Resolution Rate (%)" />
+                  <Bar dataKey="opened" stackId="a" fill={COLORS[0]} name="Tickets Opened" />
+                  <Bar dataKey="resolved" stackId="a" fill={COLORS[1]} name="Tickets Resolved" />
                 </BarChart>
               </ResponsiveContainer>
             </StyledPaper>
           </Grid>
-          <Grid item xs={12}>
+
+          <Grid item xs={12} md={6}>
             <StyledPaper elevation={3}>
-            <TitleWithIcon1 title={cardTitles[1].title} icon={cardTitles[1].icon} />
+              <TitleWithIcon1 title={cardTitles[1].title} icon={cardTitles[1].icon} />
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={ticketTrendData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -268,7 +261,7 @@ export default function TicketsDashboard({ tickets, resolutions }) {
           </Grid>
           <Grid item xs={12} md={6}>
             <StyledPaper elevation={3}>
-            <TitleWithIcon1 title={cardTitles[2].title} icon={cardTitles[2].icon} />
+              <TitleWithIcon1 title={cardTitles[2].title} icon={cardTitles[2].icon} />
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -292,7 +285,7 @@ export default function TicketsDashboard({ tickets, resolutions }) {
           </Grid>
           <Grid item xs={12} md={6}>
             <StyledPaper elevation={3}>
-            <TitleWithIcon1 title={cardTitles[3].title} icon={cardTitles[3].icon} />
+              <TitleWithIcon1 title={cardTitles[3].title} icon={cardTitles[3].icon} />
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={severityData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -307,7 +300,7 @@ export default function TicketsDashboard({ tickets, resolutions }) {
           </Grid>
           <Grid item xs={12}>
             <StyledPaper elevation={3}>
-            <TitleWithIcon1 title={cardTitles[4].title} icon={cardTitles[4].icon} />
+              <TitleWithIcon1 title={cardTitles[4].title} icon={cardTitles[4].icon} />
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={severityData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -325,3 +318,7 @@ export default function TicketsDashboard({ tickets, resolutions }) {
     </ThemeProvider>
   );
 }
+TicketsDashboard.propTypes = {
+  tickets: PropTypes.array.isRequired,
+  resolutions: PropTypes.array.isRequired,
+};

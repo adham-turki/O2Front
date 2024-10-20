@@ -1,13 +1,10 @@
-"use client"
 
 import { useMemo } from 'react'
 import {
   Box,
   Grid,
-  Paper,
   Typography,
   styled,
-  useTheme,
   Table,
   TableBody,
   TableCell,
@@ -34,7 +31,9 @@ import {
   BarChart as BarChartIcon,
   AccessTime
 } from '@mui/icons-material'
-import { motion } from 'framer-motion'
+import PropTypes from 'prop-types'
+import { StyledCardForResolutions as StyledCard } from './StyledCards';
+
 
 const theme = createTheme({
   palette: {
@@ -65,15 +64,7 @@ const theme = createTheme({
   },
 })
 
-const StyledCard = styled(motion(Paper))(({ theme }) => ({
-  padding: theme.spacing(3),
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  background: 'linear-gradient(145deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.3) 100%)',
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.18)',
-}))
+
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
@@ -270,4 +261,7 @@ export default function ResolutionsDashboard({ resolutions }) {
       </Box>
     </ThemeProvider>
   )
+}
+ResolutionsDashboard.propTypes = {
+  resolutions: PropTypes.array.isRequired,
 }

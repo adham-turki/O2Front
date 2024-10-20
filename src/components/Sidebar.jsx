@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, IconButton, ThemeProvider, createTheme, CssBaseline, styled } from '@mui/material';
-import { Menu as MenuIcon, Dashboard as DashboardIcon, Support as SupportIcon, Engineering as EngineeringIcon, Business as BusinessIcon, BarChart as BarChartIcon, Assignment as AssignmentIcon, Person as PersonIcon } from '@mui/icons-material';
-import { motion } from 'framer-motion';
+import {
+  Box, Tooltip, Zoom, Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, IconButton, ThemeProvider, createTheme, CssBaseline, styled
+} from '@mui/material';
+import { Menu as MenuIcon, Dashboard as DashboardIcon, Support as SupportIcon, AutoAwesome } from '@mui/icons-material';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const drawerWidth = 240;
@@ -16,34 +19,19 @@ const theme = createTheme({
   },
 });
 
-const Main = styled('main', {
-  shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme, open }) => ({
+const Main = styled('main')(({ theme }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
-  transition: theme.transitions.create('margin', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  marginLeft: `-${drawerWidth}px`,
-  ...(open && {
-    transition: theme.transitions.create('margin', {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-    marginLeft: 0,
-  }),
+  marginLeft: -drawerWidth,
 }));
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
-  margin: theme.spacing(1, 0),
   borderRadius: theme.shape.borderRadius,
+  transition: 'all 0.3s ease',
   '&:hover': {
-    backgroundColor: theme.palette.action.hover,
-    '& .icon': {
-      scale: 1.2,
-      rotate: 360,
-    },
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
   },
 }));
 
@@ -51,12 +39,9 @@ const AnimatedListItemIcon = motion(ListItemIcon);
 
 const dashboards = [
   { name: 'Main Dashboard', icon: <DashboardIcon />, path: '/main-dashboard' },
-  { name: 'Tickets Dashboard', icon: <SupportIcon />, path: '/ticket-dashboard' },
-  { name: 'Engineers Dashboard', icon: <EngineeringIcon />, path: '/engineers-dashboard' },
-  { name: 'Manager Dashboard', icon: <BusinessIcon />, path: '/manager-dashboard' },
-  { name: 'Custom Dashboard', icon: <BarChartIcon />, path: '/custom-dashboard' },
-  { name: 'Ticket Workflow', icon: <AssignmentIcon />, path: '/ticket-flow' },
-  { name: 'Customer Dashboard', icon: <PersonIcon />, path: '/customer-dashboard' },
+  { name: 'Tickets', icon: <SupportIcon />, path: '/table-dashboard' },
+  { name: 'Tickets Funnel', icon: <FilterAltIcon />, path: '/tickets-funnel' },
+  { name: 'Advanced Tickets Funnel', icon: <AutoAwesome />, path: '/advanced-tickets-funnel' },
 ];
 
 export default function Sidebar() {
@@ -89,7 +74,7 @@ export default function Sidebar() {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" noWrap component="div">
-              525K Dashboard
+              525K
             </Typography>
           </Toolbar>
         </AppBar>
@@ -98,8 +83,10 @@ export default function Sidebar() {
           anchor="left"
           open={open}
           sx={{
-            width: drawerWidth,
-            flexShrink: 0,
+            position: 'absolute',  // Ensure the drawer is positioned absolutely
+            top: 0,  // Align with the top of the window
+            height: '100%',  // Full height of the window
+            zIndex: (theme) => theme.zIndex.drawer,  // Ensure it appears above other components
             '& .MuiDrawer-paper': {
               width: drawerWidth,
               boxSizing: 'border-box',
@@ -109,30 +96,49 @@ export default function Sidebar() {
           }}
         >
           <Toolbar />
-          <Box sx={{ overflow: 'auto', mt: 2,cursor:'pointer' }}>
+          <Box sx={{ overflow: 'auto', mt: 2, cursor: 'pointer' }}>
+            <Typography variant="h4" sx={{ textAlign: 'center', fontWeight: 600 }}>
+              525K
+            </Typography>
             <List>
-              {dashboards.map((dashboard) => (
-                <StyledListItem
-                  button
-                  key={dashboard.name}
-                  onClick={() => handleDashboardChange(dashboard.path)}
-                  selected={location.pathname === dashboard.path}
-                >
-                  <AnimatedListItemIcon
-                    className="icon"
+              <AnimatePresence>
+                {dashboards.map((dashboard) => (
+                  <motion.div
+                    key={dashboard.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
-                    sx={{ color: 'white' }}
                   >
-                    {dashboard.icon}
-                  </AnimatedListItemIcon>
-                  <ListItemText primary={dashboard.name} />
-                </StyledListItem>
-              ))}
+                    <Tooltip
+                      title={dashboard.name}
+                      placement="right"
+                      TransitionComponent={Zoom}
+                      arrow
+                    >
+                      <StyledListItem
+                        button
+                        onClick={() => handleDashboardChange(dashboard.path)}
+                        selected={location.pathname === dashboard.path}
+                      >
+                        <AnimatedListItemIcon
+                          transition={{ duration: 0.3 }}
+                          sx={{ color: 'white' }}
+                        >
+                          {dashboard.icon}
+                        </AnimatedListItemIcon>
+                        <ListItemText primary={dashboard.name} />
+                      </StyledListItem>
+                    </Tooltip>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </List>
           </Box>
         </Drawer>
-        <Main open={open}>
+        <Main>
           <Toolbar />
+          {/* Main content goes here */}
         </Main>
       </Box>
     </ThemeProvider>

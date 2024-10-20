@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import {
   Box, Typography, Chip, Avatar, Grid, Paper, IconButton,
-  Tooltip, ThemeProvider, createTheme
+  Tooltip, ThemeProvider, createTheme, Zoom, Fade, Grow
 } from '@mui/material';
 import {
   BugReport, AccessTime, CheckCircle, Error, Label, Person,
@@ -30,7 +31,23 @@ const theme = createTheme({
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: 12,
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'linear-gradient(to bottom right, #ffffff, #f0f0f0)',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 16,
+        },
+      },
+    },
   },
 });
 
@@ -62,302 +79,199 @@ const engagementIcons = {
   CustomerFollowUp: <Phone />,
 };
 
-const ticketData = {
-  "id": 1,
-  "type": "BUG",
-  "title": "failed to login",
-  "slackThreadId": "923539",
-  "metSla": false,
-  "reportedOn": "2024-10-13T21:15:00.000Z",
-  "resolvedOn": "2024-10-11T21:15:00.000Z",
-  "ticketStatus": "New",
-  "sevirity": "SEV2",
-  "priority": "Critical",
-  "reportedBy": {
-    "name": "Ahmad Seder",
-    "email": "ahmad@525k.io",
-  },
-  "tags": [
-    { "label": "BE" }
-  ],
-  "engagements": {
-    "data": [
-      {
-        "id": 1,
-        "engagedOn": "2024-10-08T06:45:00.000Z",
-        "action": "Engage",
-        "message": "first touch",
-        "member": {
-          "name": "Ahmad Seder",
-        }
-      },
-      {
-        "id": 2,
-        "engagedOn": "2024-10-08T21:15:00.000Z",
-        "action": "UpdateStatus",
-        "message": "update the status",
-        "member": {
-          "name": "adham turki",
-        }
-      },
-      {
-        "id": 3,
-        "engagedOn": "2024-10-09T21:00:00.000Z",
-        "action": "EscalateToTier2",
-        "message": "abudaqa escalated the ticket to tariq",
-        "member": {
-          "name": "Ahmad Abu Daqa",
-        }
-      },
-      {
-        "id": 4,
-        "engagedOn": "2024-10-10T21:00:00.000Z",
-        "action": "IncidentReporting",
-        "message": "report incident",
-        "member": {
-          "name": "Ahmad Seder",
-        }
-      },
-      {
-        "id": 5,
-        "engagedOn": "2024-10-10T21:15:00.000Z",
-        "action": "RequestFulfillment",
-        "message": "request fulfillment",
-        "member": {
-          "name": "Ahmad Seder",
-        }
-      },
-      {
-        "id": 6,
-        "engagedOn": "2024-10-10T21:30:00.000Z",
-        "action": "TaskAssignment",
-        "message": "assign tasks",
-        "member": {
-          "name": "Ahmad Seder",
-        }
-      },
-      {
-        "id": 7,
-        "engagedOn": "2024-10-10T21:45:00.000Z",
-        "action": "Contribution",
-        "message": "contribute",
-        "member": {
-          "name": "islam",
-        }
-      },
-      {
-        "id": 8,
-        "engagedOn": "2024-10-11T21:00:00.000Z",
-        "action": "CustomerFollowUp",
-        "message": "update the status for the customer",
-        "member": {
-          "name": "Ahmad Abu Daqa",
-        }
-      }
-    ]
-  },
-  "domains": [
-    { "name": "alkhaldi" }
-  ]
-};
-
-const incidentData = {
-  "issue": "failed to login",
-  "firstSeen": "2024-10-07T21:00:00.000Z",
-  "lastSeen": "2024-10-13T21:15:00.000Z",
-  "sevirity": "SEV1",
-  "members": [
-    {
-      "name": "Ahmadosh",
-      "email": "ahmad@gmail.com",
-    }
-  ],
-  "solutions": [
-    {
-      "id": 1,
-      "solution": "aksdbasdbb",
-      "rootCause": "qsakjsbdaksbd"
-    },
-    {
-      "id": 2,
-      "solution": "change password every time in a while",
-      "rootCause": "the password isnt changed from a year ago"
-    }
-  ],
-};
-
 const InfoCard = ({ title, children, icon }) => {
-  const [expanded, setExpanded] = useState(true);
 
   return (
-    <MotionPaper
-      elevation={3}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      sx={{
-        p: 3,
-        height: expanded ? 'auto' : '300px',
-        overflow: 'hidden',
-        position: 'relative'
-      }}
-    >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-          {React.cloneElement(icon, { sx: { mr: 1 } })}
-          {title}
-        </Typography>
-
-      </Box>
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          {children}
-        </motion.div>
-      </AnimatePresence>
-    </MotionPaper>
+    <Grow in={true} timeout={800}>
+      <MotionPaper
+        elevation={6}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        sx={{
+          p: 3,
+          height: 'auto' ,
+          overflow: 'hidden',
+          position: 'relative',
+          borderRadius: 4,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', color: 'primary.main' }}>
+            {React.cloneElement(icon, { sx: { mr: 1, fontSize: 28 } })}
+            {title}
+          </Typography>
+          
+        </Box>
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      </MotionPaper>
+    </Grow>
   );
 };
-// props validation for info card
+
 InfoCard.propTypes = {
   title: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
   icon: PropTypes.node.isRequired,
 };
+
 export default function EnhancedTicketWorkflow() {
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const location = useLocation();
+  const { selectedTicket, ticketResolutions } = location.state || {};
+  const firstResolution = ticketResolutions?.[0] || {};
+  const hasResolutions = ticketResolutions && ticketResolutions.length > 0;
 
   const timelineEvents = [
-    { date: incidentData.firstSeen, title: "Incident First Seen", icon: <Error />, color: theme.palette.error.main },
-    { date: ticketData.reportedOn, title: "Ticket Reported", icon: <BugReport />, color: theme.palette.primary.main },
-    ...ticketData.engagements.data.map(eng => ({
-      date: eng.engagedOn,
+    { date: selectedTicket.reportedOn || new Date(), title: "Ticket Reported", icon: <BugReport />, color: theme.palette.primary.main },
+    ...selectedTicket.engagements.map(eng => ({
+      date: eng.engagedOn || new Date(),
       title: eng.action,
       description: eng.message,
       icon: engagementIcons[eng.action] || <AccessTime />,
       color: theme.palette.secondary.main,
-      member: eng.member.name
+      members: eng.members[0]?.name || 'Unknown'
     })),
-    { date: incidentData.lastSeen, title: "Incident Last Seen", icon: <Error />, color: theme.palette.error.main },
-    { date: ticketData.resolvedOn, title: "Ticket Resolved", icon: <CheckCircle />, color: theme.palette.success.main }
-  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  ];
+
+  if (selectedTicket.resolvedOn) {
+    timelineEvents.push({
+      date: selectedTicket.resolvedOn,
+      title: "Ticket Resolved",
+      icon: <CheckCircle />,
+      color: theme.palette.success.main,
+    });
+  }
+
+  timelineEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ maxWidth: 1200, margin: 'auto', p: 4, bgcolor: 'background.default' }}>
-        <Typography variant="h3" gutterBottom align="center" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-          Ticket Workflow Visualization
-        </Typography>
+        <Fade in={true} timeout={1000}>
+          <Typography variant="h3" gutterBottom align="center" sx={{ fontWeight: 'bold', color: 'primary.main', textShadow: '2px 2px 4px rgba(0,0,0,0.1)' }}>
+            Ticket Workflow Visualization
+          </Typography>
+        </Fade>
 
         <Grid container spacing={4}>
           <Grid item xs={12} md={4}>
             <InfoCard title="Ticket Details" icon={<Assignment />} >
-              <Typography><strong>ID:</strong> {ticketData.id}</Typography>
-              <Typography><strong>Type:</strong> {ticketData.type}</Typography>
-              <Typography><strong>Title:</strong> {ticketData.title}</Typography>
-              <Typography><strong>Status:</strong> {ticketData.ticketStatus}</Typography>
+              <Typography><strong>ID:</strong> {selectedTicket.id}</Typography>
+              <Typography><strong>Type:</strong> {selectedTicket.type}</Typography>
+              <Typography><strong>Title:</strong> {selectedTicket.title}</Typography>
+              <Typography><strong>Status:</strong> {selectedTicket.ticketStatus}</Typography>
               <Typography>
                 <strong>Severity:</strong>
                 <Chip
-                  label={ticketData.sevirity}
+                  label={selectedTicket?.severity || 'N/A'}
                   size="small"
-                  sx={{ ml: 1, bgcolor: severityColors[ticketData.sevirity], color: 'white' }}
+                  sx={{ ml: 1, bgcolor: severityColors[selectedTicket?.severity] || 'grey', color: 'white' }}
                 />
               </Typography>
               <Typography>
                 <strong>Priority:</strong>
                 <Chip
-                  icon={priorityIcons[ticketData.priority]}
-                  label={ticketData.priority}
+                  icon={priorityIcons[selectedTicket?.priority] || <Speed />}
+                  label={selectedTicket?.priority || 'N/A'}
                   size="small"
                   sx={{ ml: 1 }}
                 />
               </Typography>
-              <Typography><strong>Reported By:</strong> {ticketData.reportedBy.name}</Typography>
+              <Typography><strong>Reported By:</strong> {selectedTicket?.reportedBy?.name || 'N/A'}</Typography>
               <Box mt={2}>
                 <Typography variant="subtitle2" >Tags:</Typography>
-                {ticketData.tags.map((tag, index) => (
-                  <Chip
-                    key={index}
-                    label={tag.label}
-                    icon={<Label />}
-                    size="small"
-                    variant="outlined"
-                    sx={{ m: 0.5 }}
-                  />
-                ))}
+                {selectedTicket?.tags?.map((tag, index) => (
+                  <Tooltip title={tag.label} key={index}>
+                    <Chip
+                      label={tag.label}
+                      icon={<Label />}
+                      size="small"
+                      variant="outlined"
+                      sx={{ m: 0.5 }}
+                      color="secondary"
+                    />
+                  </Tooltip>
+                )) || 'No tags'}
               </Box>
             </InfoCard>
           </Grid>
 
-
           <Grid item xs={12} md={4}>
             <InfoCard title="Incident Information" icon={<Error />}>
-              <Typography><strong>Issue:</strong> {incidentData.issue}</Typography>
-              <Typography><strong>First Seen:</strong> {new Date(incidentData.firstSeen).toLocaleString()}</Typography>
-              <Typography><strong>Last Seen:</strong> {new Date(incidentData.lastSeen).toLocaleString()}</Typography>
+              <Typography><strong>Issue:</strong> {firstResolution.issue || 'N/A'}</Typography>
+              <Typography><strong>First Seen:</strong> {new Date(firstResolution.firstSeen || new Date()).toLocaleString()}</Typography>
+              <Typography><strong>Last Seen:</strong> {new Date(firstResolution.lastSeen || new Date()).toLocaleString()}</Typography>
               <Typography>
                 <strong>Severity:</strong>
                 <Chip
-                  label={incidentData.sevirity}
+                  label={firstResolution.severity || 'N/A'}
                   size="small"
-                  sx={{ ml: 1, bgcolor: severityColors[incidentData.sevirity], color: 'white' }}
+                  sx={{ ml: 1, bgcolor: severityColors[firstResolution.severity] || 'grey', color: 'white' }}
                 />
               </Typography>
               <Box mt={2}>
                 <Typography variant="subtitle2">Involved Members:</Typography>
-                {incidentData.members.map((member, index) => (
-                  <Chip 
-                    key={index}
-                    avatar={<Avatar>{member.name[0]}</Avatar>}
-                    label={member.name}
-                    variant="outlined"
-                    sx={{ m: 0.5 }}
-                    color="primary"
-                    
-                  />
-                ))}
+                {firstResolution.members?.map((members, index) => (
+                  <Tooltip title={members.name} key={index}>
+                    <Chip
+                      avatar={<Avatar>{members.name[0]}</Avatar>}
+                      label={members.name}
+                      variant="outlined"
+                      sx={{ m: 0.5 }}
+                      color="primary"
+                    />
+                  </Tooltip>
+                )) || 'No members involved'}
               </Box>
             </InfoCard>
           </Grid>
 
           <Grid item xs={12} md={4}>
             <InfoCard title="Domains Affected" icon={<Person />}>
-              {ticketData.domains.map((domain, index) => (
-                <Chip
-                  key={index}
-                  label={domain.name}
-                  icon={<Person />}
-                  variant="outlined"
-                  sx={{ m: 0.5 }}
-                  color="primary"
-
-                />
-              ))}
+              {selectedTicket?.domains?.map((domain, index) => (
+                <Tooltip title={domain.name} key={index}>
+                  <Chip
+                    label={domain.name}
+                    icon={<Person />}
+                    variant="outlined"
+                    sx={{ m: 0.5 }}
+                    color="primary"
+                  />
+                </Tooltip>
+              )) || 'No affected domains'}
             </InfoCard>
           </Grid>
         </Grid>
+
         <Grid className='mt-4'>
-        <InfoCard title="Solutions and Root Causes" icon={<Lightbulb />}>
-          {/* New Section for Solution and Root Cause */}
-          <Box mt={2}>
-                {incidentData.solutions.map((solution, index) => (
-                  <Paper key={index} elevation={1} sx={{ p: 2, mb: 1 }}>
-                    <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold' }}>Root Cause {index + 1}:</Typography>
+          <InfoCard title="Solutions and Root Causes" icon={<Lightbulb />}>
+            <Box mt={2}>
+              {hasResolutions && firstResolution.solutions?.map((solution, index) => (
+                <Zoom in={true} style={{ transitionDelay: `${index * 150}ms` }} key={index}>
+                  <Paper elevation={3} sx={{ p: 2, mb: 2, borderLeft: `4px solid ${theme.palette.primary.main}` }}>
+                    <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold', color: 'primary.main' }}>Root Cause {index + 1}:</Typography>
                     <Typography variant="body2" color="text.secondary">{solution.rootCause}</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Solution :</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'secondary.main', mt: 1 }}>Solution:</Typography>
                     <Typography variant="body2" color="text.secondary">{solution.solution}</Typography>
                   </Paper>
-                ))}
-              </Box>
-              </InfoCard>
+                </Zoom>
+              )) || 'No solutions available'}
+            </Box>
+          </InfoCard>
         </Grid>
 
-        <MotionPaper elevation={3} sx={{ mt: 4, p: 3 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+        <MotionPaper elevation={6} sx={{ mt: 4, p: 3, borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', color: 'primary.main' }}>
             <TimelineIcon sx={{ mr: 1 }} />
             Ticket Timeline
           </Typography>
@@ -372,33 +286,37 @@ export default function EnhancedTicketWorkflow() {
                     {index < timelineEvents.length - 1 && <TimelineConnector />}
                   </TimelineSeparator>
                   <TimelineContent>
-                    <MotionPaper
-                      elevation={3}
-                      sx={{
-                        p: 2,
-                        bgcolor: 'background.paper',
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                    >
-                      <Typography variant="h6" component="div" sx={{ color: event.color }}>
-                        {event.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {new Date(event.date).toLocaleString()}
-                      </Typography>
-                      {event.description && (
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          {event.description}
+                    <Grow in={true} style={{ transformOrigin: '0 0 0' }} timeout={1000}>
+                      <MotionPaper
+                        elevation={3}
+                        sx={{
+                          p: 2,
+                          bgcolor: 'background.paper',
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease-in-out',
+                          
+                        }}
+                        onClick={() => setSelectedEvent(event)}
+                      >
+                        <Typography variant="h6" component="div" sx={{ color: event.color }}>
+                          {event.title}
                         </Typography>
-                      )}
-                      {event.member && (
-                        <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
-                          by: {event.member}
+                        <Typography variant="body2" color="text.secondary">
+                          {new Date(event.date).toLocaleString()}
                         </Typography>
-                      )}
-                    </MotionPaper>
+                        {event.description && (
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            {event.description}
+                          </Typography>
+                        )}
+                        {event.members && (
+                          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+                            by: {event.members}
+                          </Typography>
+                        )}
+                      </MotionPaper>
+                    </Grow>
                   </TimelineContent>
                 </TimelineItem>
               ))}

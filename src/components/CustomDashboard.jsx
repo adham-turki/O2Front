@@ -126,13 +126,15 @@ export default function CustomDashboard() {
     topEngineers: [],
   });
   const [tabValue, setTabValue] = useState(0);
+  const apiUrl = import.meta.env.VITE_API_HOST;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/data.json');
+        const response = await fetch(`${apiUrl}/api/stats/CustomDashboard`);
         const data = await response.json();
         setTickets(data);
+        setData(data);
         console.log("Tickets data:", data);
       } catch (error) {
         console.error("Error fetching ticket data:", error);
@@ -142,68 +144,68 @@ export default function CustomDashboard() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const processData = () => {
-      const result = {
-        totalTickets: ticketData.length,
-        openTickets: 0,
-        avgResolutionTime: 0,
-        slaCompliance: 0,
-        platformDistribution: { BE: 0, FE: 0 },
-        severityDistribution: {},
-        monthlyTickets: {},
-        topEngineers: {},
-      };
+  // useEffect(() => {
+  //   const processData = () => {
+  //     const result = {
+  //       totalTickets: ticketData.length,
+  //       openTickets: 0,
+  //       avgResolutionTime: 0,
+  //       slaCompliance: 0,
+  //       platformDistribution: { BE: 0, FE: 0 },
+  //       severityDistribution: {},
+  //       monthlyTickets: {},
+  //       topEngineers: {},
+  //     };
 
-      ticketData.forEach(ticket => {
-        if (!ticket.isSolved) result.openTickets++;
+  //     ticketData.forEach(ticket => {
+  //       if (!ticket.isSolved) result.openTickets++;
 
-        // Count platform distribution
-        result.platformDistribution[ticket.platform] = (result.platformDistribution[ticket.platform] || 0) + 1;
+  //       // Count platform distribution
+  //       result.platformDistribution[ticket.platform] = (result.platformDistribution[ticket.platform] || 0) + 1;
 
-        // Count severity distribution
-        result.severityDistribution[ticket.severity] = (result.severityDistribution[ticket.severity] || 0) + 1;
+  //       // Count severity distribution
+  //       result.severityDistribution[ticket.severity] = (result.severityDistribution[ticket.severity] || 0) + 1;
 
-        // Count monthly tickets
-        const month = new Date(ticket.dateOpened).toLocaleString('default', { month: 'long' });
-        result.monthlyTickets[month] = (result.monthlyTickets[month] || 0) + 1;
+  //       // Count monthly tickets
+  //       const month = new Date(ticket.dateOpened).toLocaleString('default', { month: 'long' });
+  //       result.monthlyTickets[month] = (result.monthlyTickets[month] || 0) + 1;
 
-        // Check SLA compliance
-        if (ticket.SLA) result.slaCompliance++;
+  //       // Check SLA compliance
+  //       if (ticket.SLA) result.slaCompliance++;
 
-        // Calculate average resolution time for solved tickets
-        if (ticket.isSolved) {
-          const resolutionTime = new Date(ticket.resolutionTime).getTime() - new Date(ticket.dateOpened).getTime();
-          result.avgResolutionTime += resolutionTime;
-        }
+  //       // Calculate average resolution time for solved tickets
+  //       if (ticket.isSolved) {
+  //         const resolutionTime = new Date(ticket.resolutionTime).getTime() - new Date(ticket.dateOpened).getTime();
+  //         result.avgResolutionTime += resolutionTime;
+  //       }
 
-        // Count top engineers
-        ticket.engagedEngineers.forEach(engineer => {
-          result.topEngineers[engineer] = (result.topEngineers[engineer] || 0) + 1;
-        });
-      });
+  //       // Count top engineers
+  //       ticket.engagedEngineers.forEach(engineer => {
+  //         result.topEngineers[engineer] = (result.topEngineers[engineer] || 0) + 1;
+  //       });
+  //     });
 
-      // Calculate the final average resolution time in hours
-      result.avgResolutionTime = result.avgResolutionTime / ticketData.filter(t => t.isSolved).length / (1000 * 60 * 60);
+  //     // Calculate the final average resolution time in hours
+  //     result.avgResolutionTime = result.avgResolutionTime / ticketData.filter(t => t.isSolved).length / (1000 * 60 * 60);
 
-      // Calculate SLA compliance percentage
-      result.slaCompliance = (result.slaCompliance / result.totalTickets) * 100;
+  //     // Calculate SLA compliance percentage
+  //     result.slaCompliance = (result.slaCompliance / result.totalTickets) * 100;
 
-      // Prepare data for charts
-      setData({
-        ...result,
-        platformDistribution: Object.entries(result.platformDistribution).map(([name, value]) => ({ name, value })),
-        severityDistribution: Object.entries(result.severityDistribution).map(([name, value]) => ({ name, value })),
-        monthlyTickets: Object.entries(result.monthlyTickets).map(([name, value]) => ({ name, value })),
-        topEngineers: Object.entries(result.topEngineers)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([name, value]) => ({ name, value })),
-      });
-    };
+  //     // Prepare data for charts
+  //     setData({
+  //       ...result,
+  //       platformDistribution: Object.entries(result.platformDistribution).map(([name, value]) => ({ name, value })),
+  //       severityDistribution: Object.entries(result.severityDistribution).map(([name, value]) => ({ name, value })),
+  //       monthlyTickets: Object.entries(result.monthlyTickets).map(([name, value]) => ({ name, value })),
+  //       topEngineers: Object.entries(result.topEngineers)
+  //         .sort((a, b) => b[1] - a[1])
+  //         .slice(0, 5)
+  //         .map(([name, value]) => ({ name, value })),
+  //     });
+  //   };
 
-    processData();
-  }, [ticketData]); // Added ticketData as a dependency
+  //   processData();
+  // }, [ticketData]); // Added ticketData as a dependency
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);

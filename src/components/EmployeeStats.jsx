@@ -92,11 +92,13 @@ export default function EngineersDashboard() {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState(0);
+    const apiUrl = import.meta.env.VITE_API_HOST;
+
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch('/data.json');
+                const response = await fetch(`${apiUrl}/api/stats/EngineersDashboard`);
                 const data = await response.json();
                 setTickets(data);
                 setLoading(false);
@@ -107,6 +109,8 @@ export default function EngineersDashboard() {
         };
 
         fetchData();
+        console.log(tickets);
+        
     }, []);
 
     if (loading) {
@@ -119,116 +123,28 @@ export default function EngineersDashboard() {
 
     // Data processing functions
     const processOnCallLeaderboard = () => {
-        const onCallCounts = tickets.reduce((acc, ticket) => {
-            acc[ticket.onCall] = (acc[ticket.onCall] || 0) + 1;
-            return acc;
-        }, {});
-        return Object.entries(onCallCounts)
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 5);
+        // log(tickets.processOnCallLeaderboard);
+        return tickets.processOnCallLeaderboard
     };
 
     const processParticipationNetwork = () => {
-        const nodes = new Set();
-        const links = [];
-        tickets.forEach(ticket => {
-            ticket.engagedEngineers.forEach((engineer, i) => {
-                nodes.add(engineer);
-                ticket.engagedEngineers.forEach((otherEngineer, j) => {
-                    if (i !== j) {
-                        links.push({ source: engineer, target: otherEngineer });
-                    }
-                });
-            });
-        });
-        return {
-            nodes: Array.from(nodes).map(id => ({ id })),
-            links
-        };
+    return tickets.processParticipationNetwork
     };
 
     const processTopContributors = () => {
-        const contributorData = tickets.reduce((acc, ticket) => {
-            const addContribution = (user, role) => {
-                if (!acc[user]) acc[user] = { onCall: 0, participant: 0, solver: 0 };
-                acc[user][role]++;
-            };
-
-            addContribution(ticket.onCall, 'onCall');
-            ticket.engagedEngineers.forEach(engineer => addContribution(engineer, 'participant'));
-            if (ticket.isSolved) addContribution(ticket.onCall, 'solver');
-
-            return acc;
-        }, {});
-
-        return Object.entries(contributorData).map(([name, roles]) => ({
-            name,
-            ...roles,
-            total: roles.onCall + roles.participant + roles.solver
-        })).sort((a, b) => b.total - a.total).slice(0, 10);
+       return tickets.processTopContributors
     };
 
     const processEfficiencyRadar = () => {
-        const userData = tickets.reduce((acc, ticket) => {
-            const user = ticket.onCall;
-            if (!acc[user]) {
-                acc[user] = { name: user, solved: 0, avgSolutionTime: 0, onCall: 0, collaborations: 0 };
-            }
-            acc[user].onCall++;
-            acc[user].collaborations += ticket.engagedEngineers.length;
-            if (ticket.isSolved) {
-                acc[user].solved++;
-                const solutionTime = (new Date(ticket.resolutionTime) - new Date(ticket.dateOpened)) / (1000 * 60 * 60);
-                acc[user].avgSolutionTime = (acc[user].avgSolutionTime * (acc[user].solved - 1) + solutionTime) / acc[user].solved;
-            }
-            return acc;
-        }, {});
-
-        return Object.values(userData);
+      return tickets.processEfficiencyRadar
     };
 
     const processSolversEfficiencyScoreboard = () => {
-        const solverData = tickets.reduce((acc, ticket) => {
-            if (ticket.isSolved) {
-                const solver = ticket.onCall;
-                if (!acc[solver]) {
-                    acc[solver] = { name: solver, avgSolutionTime: 0, avgSeverity: 0, totalTickets: 0 };
-                }
-                const solutionTime = (new Date(ticket.resolutionTime) - new Date(ticket.dateOpened)) / (1000 * 60 * 60);
-                const severityValue = { Low: 1, Medium: 2, High: 3, Critical: 4 }[ticket.severity];
-                acc[solver].avgSolutionTime = (acc[solver].avgSolutionTime * acc[solver].totalTickets + solutionTime) / (acc[solver].totalTickets + 1);
-                acc[solver].avgSeverity = (acc[solver].avgSeverity * acc[solver].totalTickets + severityValue) / (acc[solver].totalTickets + 1);
-                acc[solver].totalTickets++;
-            }
-            return acc;
-        }, {});
-
-        return Object.values(solverData);
+        return tickets.processSolversEfficiencyScoreboard
     };
 
     const processProblemSolversTree = () => {
-        const solverData = tickets.reduce((acc, ticket) => {
-            if (ticket.isSolved) {
-                const solver = ticket.onCall;
-                if (!acc[solver]) {
-                    acc[solver] = { name: solver, children: {} };
-                }
-                if (!acc[solver].children[ticket.type]) {
-                    acc[solver].children[ticket.type] = { name: ticket.type, value: 0 };
-                }
-                acc[solver].children[ticket.type].value++;
-            }
-            return acc;
-        }, {});
-
-        return {
-            name: 'Problem Solvers',
-            children: Object.values(solverData).map(solver => ({
-                name: solver.name,
-                children: Object.values(solver.children)
-            }))
-        };
+        return tickets.processProblemSolversTree
     };
 
     // Render functions for each chart
@@ -254,6 +170,8 @@ export default function EngineersDashboard() {
 
     const renderParticipationNetwork = () => {
         const graphData = processParticipationNetwork();
+        console.log(graphData);
+        
         return (
             <ForceGraph2D
                 graphData={graphData}

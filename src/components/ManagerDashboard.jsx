@@ -96,8 +96,11 @@ const IconWrapper = styled(Box)(({ theme }) => ({
 
 export default function ManagerDashboard() {
   const [tickets, setTickets] = useState([]);
+  const [tickets2, setTickets2] = useState([]);
   const [tabValue, setTabValue] = useState(0);
   const theme = useTheme();
+  const apiUrl = import.meta.env.VITE_API_HOST;
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,84 +117,30 @@ export default function ManagerDashboard() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchData2 = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/api/stats/ManagerDashboard`);
+        const data = await response.json();
+        setTickets2(data);
+        console.log("Tickets data:", data);
+      } catch (error) {
+        console.error("Error fetching ticket data:", error);
+      }
+    };
+
+    fetchData2();
+  }, []);
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-  // Data processing functions
-  const getMonthlyResolutionRate = () => {
-    const monthlyData = {};
-    tickets.forEach(ticket => {
-      const month = new Date(ticket.dateOpened).toLocaleString('default', { month: 'long' });
-      if (!monthlyData[month]) {
-        monthlyData[month] = { opened: 0, resolved: 0 };
-      }
-      monthlyData[month].opened++;
-      if (ticket.isSolved) {
-        monthlyData[month].resolved++;
-      }
-    });
-    return Object.entries(monthlyData).map(([month, data]) => ({
-      month,
-      opened: data.opened,
-      resolved: data.resolved,
-      resolutionRate: (data.resolved / data.opened) * 100,
-    }));
-  };
 
-  const getAverageResolutionTimeByMonth = () => {
-    const monthlyData = {};
-    tickets.forEach(ticket => {
-      if (ticket.isSolved && ticket.resolutionTime) {
-        const month = new Date(ticket.dateOpened).toLocaleString('default', { month: 'long' });
-        if (!monthlyData[month]) {
-          monthlyData[month] = { totalTime: 0, count: 0 };
-        }
-        const resolutionTime = (new Date(ticket.resolutionTime).getTime() - new Date(ticket.dateOpened).getTime()) / (1000 * 60 * 60);
-        monthlyData[month].totalTime += resolutionTime;
-        monthlyData[month].count++;
-      }
-    });
-    return Object.entries(monthlyData).map(([month, data]) => ({
-      month,
-      avgResolutionTime: data.totalTime / data.count,
-    }));
-  };
+  
 
-  const getAverageResolutionTimeBySeverity = () => {
-    const severityData = {};
-    tickets.forEach(ticket => {
-      if (ticket.isSolved && ticket.resolutionTime) {
-        if (!severityData[ticket.severity]) {
-          severityData[ticket.severity] = { totalTime: 0, count: 0 };
-        }
-        const resolutionTime = (new Date(ticket.resolutionTime).getTime() - new Date(ticket.dateOpened).getTime()) / (1000 * 60 * 60);
-        severityData[ticket.severity].totalTime += resolutionTime;
-        severityData[ticket.severity].count++;
-      }
-    });
-    return Object.entries(severityData).map(([severity, data]) => ({
-      severity,
-      avgResolutionTime: data.totalTime / data.count,
-    }));
-  };
 
-  const getSLAComplianceBySeverity = () => {
-    const severityData = {};
-    tickets.forEach(ticket => {
-      if (!severityData[ticket.severity]) {
-        severityData[ticket.severity] = { total: 0, compliant: 0 };
-      }
-      severityData[ticket.severity].total++;
-      if (ticket.SLA) {
-        severityData[ticket.severity].compliant++;
-      }
-    });
-    return Object.entries(severityData).map(([severity, data]) => ({
-      severity,
-      complianceRate: (data.compliant / data.total) * 100,
-    }));
-  };
+
 
   const getTicketResolutionRateByEngineer = () => {
     const engineerData = {};
@@ -301,7 +250,7 @@ export default function ManagerDashboard() {
                 <Typography variant="h6" gutterBottom>
                   Monthly Resolution Rate
                 </Typography>
-                <BarChart width={800} height={400} data={getMonthlyResolutionRate()}>
+                <BarChart width={800} height={400} data={tickets2.monthlyResolutionRate}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis yAxisId="left" orientation="left" stroke={theme.palette.primary.main} />
@@ -322,7 +271,7 @@ export default function ManagerDashboard() {
                 <Typography variant="h6" gutterBottom>
                   Average Resolution Time Trend
                 </Typography>
-                <LineChart width={800} height={400} data={getAverageResolutionTimeByMonth()}>
+                <LineChart width={800} height={400} data={tickets2.averageResolutionTimeByMonth}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
@@ -344,7 +293,7 @@ export default function ManagerDashboard() {
                 <Typography variant="h6" gutterBottom>
                   Average Resolution Time by Severity
                 </Typography>
-                <BarChart width={400} height={300} data={getAverageResolutionTimeBySeverity()}>
+                <BarChart width={400} height={300} data={tickets2.averageResolutionTimeBySeverity}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="severity" />
                   <YAxis />
@@ -364,7 +313,7 @@ export default function ManagerDashboard() {
                 </Typography>
                 <PieChart width={500} height={300}  >
                   <Pie
-                    data={getSLAComplianceBySeverity()}
+                    data={tickets2.SLAComplianceBySeverity}
                     cx={250}
                     cy={150}
                     labelLine={false}
@@ -394,7 +343,7 @@ export default function ManagerDashboard() {
                 <Typography variant="h6" gutterBottom>
                   Top 10 Engineers by Resolution Rate
                 </Typography>
-                <BarChart width={400} height={300} data={getTicketResolutionRateByEngineer()}>
+                <BarChart width={400} height={300} data={tickets2.ticketResolutionRateByEngineer}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="engineer" />
                   <YAxis />
@@ -412,7 +361,7 @@ export default function ManagerDashboard() {
                 <Typography variant="h6" gutterBottom>
                   Engineer Utilization Rate
                 </Typography>
-                <BarChart width={400} height={300} data={getEngineerUtilizationRate()}>
+                <BarChart width={400} height={300} data={tickets2.engineerUtilizationRate}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="engineer" />
                   <YAxis />
@@ -443,7 +392,7 @@ export default function ManagerDashboard() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {getRootCauseFrequency().map((row) => (
+                      {tickets2.rootCauseFrequency.map((row) => (
                         <StyledTableRow key={row.cause}>
                           <StyledTableCell component="th" scope="row">
                             {row.cause}
@@ -473,7 +422,7 @@ export default function ManagerDashboard() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {getAverageResolutionTimeByRootCause().map((row) => (
+                      {tickets2.averageResolutionTimeByRootCause.map((row) => (
                         <StyledTableRow key={row.cause}>
                           <StyledTableCell component="th" scope="row">
                             {row.cause}

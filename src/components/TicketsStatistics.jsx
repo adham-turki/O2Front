@@ -66,11 +66,13 @@ export default function TicketsDashboard() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const apiUrl = import.meta.env.VITE_API_HOST;
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/data.json');
+        const response = await fetch(`${apiUrl}/api/stats/tickets`);
         const data = await response.json();
         setTickets(data);
         setLoading(false);
@@ -91,38 +93,13 @@ export default function TicketsDashboard() {
     );
   }
 
-  const severityData = tickets.reduce((acc, ticket) => {
-    acc[ticket.severity] = (acc[ticket.severity] || 0) + 1;
-    return acc;
-  }, {});
+  const severityData = tickets.severityData
+  const typeData = tickets.typeData
+  const statusData = tickets.statusData
+  const ticketTrendData = tickets.ticketTrendData
+  const resolutionTimeData = tickets.resolutionTimeData
 
-  const typeData = tickets.reduce((acc, ticket) => {
-    acc[ticket.type] = (acc[ticket.type] || 0) + 1;
-    return acc;
-  }, {});
-
-  const statusData = tickets.reduce((acc, ticket) => {
-    acc[ticket.currentStatus] = (acc[ticket.currentStatus] || 0) + 1;
-    return acc;
-  }, {});
-
-  const ticketTrendData = tickets.reduce((acc, ticket) => {
-    const date = ticket.dateOpened.split('T')[0];
-    if (!acc[date]) {
-      acc[date] = { date, count: 0 };
-    }
-    acc[date].count++;
-    return acc;
-  }, {});
-
-  const resolutionTimeData = tickets
-    .filter(ticket => ticket.resolutionTime)
-    .map(ticket => {
-      const openTime = new Date(ticket.dateOpened).getTime();
-      const solveTime = new Date(ticket.resolutionTime).getTime();
-      const resolutionTime = (solveTime - openTime) / (1000 * 60 * 60);
-      return { id: ticket.ticketId, resolutionTime, issue: ticket.issue };
-    });
+    
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);

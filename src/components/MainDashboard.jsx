@@ -95,51 +95,62 @@ export default function MainDashboard({ ticketData }) {
   const [openDialog, setOpenDialog] = useState(false);
   const [timeRange, setTimeRange] = useState('all');
   const [filteredTickets, setFilteredTickets] = useState(ticketData);
+  const apiUrl = import.meta.env.VITE_API_HOST;
+
+
+  // useEffect(() => {
+  //   const now = new Date();
+  //   const filtered = ticketData.filter(ticket => {
+  //     const ticketDate = new Date(ticket.dateOpened);
+  //     switch (timeRange) {
+  //       case 'week':
+  //         return now - ticketDate <= 7 * 24 * 60 * 60 * 1000;
+  //       case 'month':
+  //         return now - ticketDate <= 30 * 24 * 60 * 60 * 1000;
+  //       case '6months':
+  //         return now - ticketDate <= 180 * 24 * 60 * 60 * 1000;
+  //       case 'year':
+  //         return now - ticketDate <= 365 * 24 * 60 * 60 * 1000;
+  //       default:
+  //         return true;
+  //     }
+  //   });
+  //   setFilteredTickets(filtered);
+  // }, [timeRange, ticketData]);
+
 
   useEffect(() => {
-    const now = new Date();
-    const filtered = ticketData.filter(ticket => {
-      const ticketDate = new Date(ticket.dateOpened);
-      switch (timeRange) {
-        case 'week':
-          return now - ticketDate <= 7 * 24 * 60 * 60 * 1000;
-        case 'month':
-          return now - ticketDate <= 30 * 24 * 60 * 60 * 1000;
-        case '6months':
-          return now - ticketDate <= 180 * 24 * 60 * 60 * 1000;
-        case 'year':
-          return now - ticketDate <= 365 * 24 * 60 * 60 * 1000;
-        default:
-          return true;
-      }
-    });
-    setFilteredTickets(filtered);
-  }, [timeRange, ticketData]);
+    const fetchData = async () => {
+      try {
+        console.log(apiUrl);
 
-  const totalTickets = filteredTickets.length;
-  const solvedTickets = filteredTickets.filter(ticket => ticket.isSolved).length;
-  const openTickets = totalTickets - solvedTickets;
+        const response = await fetch(`${apiUrl}/api/stats/dashboard`);
+        const data = await response.json();
+        setFilteredTickets(data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
+  // const totalTickets = filteredTickets.length;
+  // const solvedTickets = filteredTickets.filter(ticket => ticket.isSolved).length;
+  // const openTickets = totalTickets - solvedTickets;
+  const totalTickets = filteredTickets['total'];
+  const solvedTickets = filteredTickets['closedTickets'];
+  const openTickets = filteredTickets['openedTickets'];
+
+
 
   
+const topEngineers = filteredTickets['engineerPerformance']
 
-  const engineerPerformanceData = filteredTickets.reduce((acc, ticket) => {
-    ticket.engagedEngineers.forEach(engineer => {
-      if (!acc[engineer]) {
-        acc[engineer] = { name: engineer, solved: 0, open: 0, total: 0 };
-      }
-      acc[engineer].total += 1;
-      if (ticket.isSolved) {
-        acc[engineer].solved += 1;
-      } else {
-        acc[engineer].open += 1;
-      }
-    });
-    return acc;
-  }, {});
 
-  const topEngineers = Object.values(engineerPerformanceData)
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5);
+console.log("Top Engineers", topEngineers);
+
 
   const handleTicketClick = (ticket) => {
     setSelectedTicket(ticket);
@@ -271,14 +282,14 @@ export default function MainDashboard({ ticketData }) {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {filteredTickets.map((ticket) => (
+                      {filteredTickets['tickets'] && filteredTickets['tickets'].map((ticket) => (
                         <TableRow
-                          key={ticket.ticketId}
+                          key={ticket.id}
                           onClick={() => handleTicketClick(ticket)}
                           style={{ cursor: 'pointer' }}
                           hover
                         >
-                          <TableCell>{ticket.ticketId}</TableCell>
+                          <TableCell>{ticket.id}</TableCell>
                           <TableCell>{ticket.issue}</TableCell>
                           <TableCell>
                             <Chip
@@ -297,13 +308,13 @@ export default function MainDashboard({ ticketData }) {
                               style={{ backgroundColor: typeColors[ticket.type], color: 'white' }}
                             />
                           </TableCell>
-                          <TableCell>{ticket.onCall}</TableCell>
-                          <TableCell>{ticket.dateOpened}</TableCell>
+                          <TableCell>{ticket.on_call}</TableCell>
+                          <TableCell>{ticket.date_opened}</TableCell>
                           <TableCell>
                             <Chip
-                              icon={ticket.isSolved ? <CheckCircleIcon /> : <ErrorIcon />}
-                              label={ticket.isSolved ? "Solved" : "Open"}
-                              color={ticket.isSolved ? "success" : "error"}
+                              icon={ticket.is_solved ? <CheckCircleIcon /> : <ErrorIcon />}
+                              label={ticket.is_solved ? "Solved" : "Open"}
+                              color={ticket.is_solved ? "success" : "error"}
                             />
                           </TableCell>
                         </TableRow>
@@ -351,23 +362,23 @@ export default function MainDashboard({ ticketData }) {
                       <TimelineDot color="primary" />
                       <TimelineConnector />
                     </TimelineSeparator>
-                    <TimelineContent>Opened: {new Date(selectedTicket.dateOpened).toLocaleString()}</TimelineContent>
+                    <TimelineContent>Opened: {new Date(selectedTicket.date_opened).toLocaleString()}</TimelineContent>
                   </TimelineItem>
-                  {selectedTicket.firstTouch && (
+                  {selectedTicket.first_touch && (
                     <TimelineItem>
                       <TimelineSeparator>
                         <TimelineDot color="secondary" />
                         <TimelineConnector />
                       </TimelineSeparator>
-                      <TimelineContent>First Touch: {new Date(selectedTicket.firstTouch).toLocaleString()}</TimelineContent>
+                      <TimelineContent>First Touch: {new Date(selectedTicket.first_touch).toLocaleString()}</TimelineContent>
                     </TimelineItem>
                   )}
-                  {selectedTicket.resolutionTime && (
+                  {selectedTicket.resolution_time && (
                     <TimelineItem>
                       <TimelineSeparator>
                         <TimelineDot color="success" />
                       </TimelineSeparator>
-                      <TimelineContent>Resolved: {new Date(selectedTicket.resolutionTime).toLocaleString()}</TimelineContent>
+                      <TimelineContent>Resolved: {new Date(selectedTicket.resolution_time).toLocaleString()}</TimelineContent>
                     </TimelineItem>
                   )}
                 </Timeline>
@@ -375,7 +386,7 @@ export default function MainDashboard({ ticketData }) {
                 {/* Engaged Engineers */}
                 <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>Engaged Engineers</Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
-                  {selectedTicket.engagedEngineers.map((engineer, index) => (
+                  {selectedTicket['engaged_engineers'].split(',').map((engineer, index) => (
                     <Chip
                       key={index}
                       avatar={<Avatar>{engineer[0]}</Avatar>}
@@ -389,7 +400,7 @@ export default function MainDashboard({ ticketData }) {
                 {/* Root Cause */}
                 <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>Root Cause</Typography>
                 <Typography variant="body1" paragraph>
-                  {selectedTicket.rootCause || 'Not identified yet'}
+                  {selectedTicket.root_cause || 'Not identified yet'}
                 </Typography>
 
                 {/* Tags */}

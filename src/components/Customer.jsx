@@ -24,11 +24,11 @@ export default function CustomerDashboard() {
     const [loading, setLoading] = useState(true);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
-
+    const apiUrl = import.meta.env.VITE_API_URL;
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch('/data.json');
+                const response = await fetch(`http://localhost:1337/api/stats/CustomerDashboard`);
                 const data = await response.json();
                 setTickets(data);
                 setLoading(false);
@@ -41,38 +41,38 @@ export default function CustomerDashboard() {
         fetchData();
     }, []);
 
-    const getCustomerStats = () => {
-        const stats = {};
-        tickets.forEach(ticket => {
-            if (!stats[ticket.customer]) {
-                stats[ticket.customer] = { total: 0, solved: 0, slaViolations: 0 };
-            }
-            stats[ticket.customer].total += 1;
-            if (ticket.isSolved) stats[ticket.customer].solved += 1;
-            if (!ticket.SLA) stats[ticket.customer].slaViolations += 1;
-        });
-        return Object.entries(stats).map(([customer, data]) => ({
-            customer,
-            total: data.total,
-            solved: data.solved,
-            slaViolations: data.slaViolations,
-            slaPerformance: ((data.total - data.slaViolations) / data.total) * 100
-        })).sort((a, b) => b.total - a.total);
-    };
+    // const getCustomerStats = () => {
+    //     const stats = {};
+    //     tickets.forEach(ticket => {
+    //         if (!stats[ticket.customer]) {
+    //             stats[ticket.customer] = { total: 0, solved: 0, slaViolations: 0 };
+    //         }
+    //         stats[ticket.customer].total += 1;
+    //         if (ticket.isSolved) stats[ticket.customer].solved += 1;
+    //         if (!ticket.SLA) stats[ticket.customer].slaViolations += 1;
+    //     });
+    //     return Object.entries(stats).map(([customer, data]) => ({
+    //         customer,
+    //         total: data.total,
+    //         solved: data.solved,
+    //         slaViolations: data.slaViolations,
+    //         slaPerformance: ((data.total - data.slaViolations) / data.total) * 100
+    //     })).sort((a, b) => b.total - a.total);
+    // };
 
-    const getCustomerTicketDistribution = () => {
-        const distribution = tickets.reduce((acc, ticket) => {
-            acc[ticket.customer] = (acc[ticket.customer] || 0) + 1;
-            return acc;
-        }, {});
-        return Object.entries(distribution).map(([name, value]) => ({ name, value }));
-    };
+    // const getCustomerTicketDistribution = () => {
+    //     const distribution = tickets.reduce((acc, ticket) => {
+    //         acc[ticket.customer] = (acc[ticket.customer] || 0) + 1;
+    //         return acc;
+    //     }, {});
+    //     return Object.entries(distribution).map(([name, value]) => ({ name, value }));
+    // };
 
 
-    const getAverageSLAPerformance = () => {
-        const slaPerformances = getCustomerStats().map(stat => stat.slaPerformance);
-        return slaPerformances.reduce((a, b) => a + b, 0) / slaPerformances.length;
-    };
+    // const getAverageSLAPerformance = () => {
+    //     const slaPerformances = tickets.CustomerStats.map(stat => stat.slaPerformance);
+    //     return slaPerformances.reduce((a, b) => a + b, 0) / slaPerformances.length;
+    // };
 
     const handleCustomerClick = (customer) => {
         setSelectedCustomer(customer);
@@ -106,7 +106,7 @@ export default function CustomerDashboard() {
                                     Total Tickets
                                 </Typography>
                                 <Typography variant="h4" component="div">
-                                    {tickets.length}
+                                    {tickets['tickets'].length}
                                 </Typography>
                                 <Typography color="textSecondary">
                                     <BugReport /> All time
@@ -121,7 +121,7 @@ export default function CustomerDashboard() {
                                     Open Tickets
                                 </Typography>
                                 <Typography variant="h4" component="div">
-                                    {tickets.filter(ticket => !ticket.isSolved).length}
+                                    {tickets['tickets'].filter(ticket => !ticket.is_solved).length}
                                 </Typography>
                                 <Typography color="#ff6500">
                                     <Error /> Needs attention
@@ -136,7 +136,7 @@ export default function CustomerDashboard() {
                                     Resolved Tickets
                                 </Typography>
                                 <Typography variant="h4" component="div">
-                                    {tickets.filter(ticket => ticket.isSolved).length}
+                                    {tickets['tickets'].filter(ticket => ticket.is_solved).length}
                                 </Typography>
                                 <Typography color="#2e7d32">
                                     <CheckCircle /> Successfully closed
@@ -151,7 +151,7 @@ export default function CustomerDashboard() {
                                     Average SLA Performance
                                 </Typography>
                                 <Typography variant="h4" component="div">
-                                    {getAverageSLAPerformance().toFixed(2)}%
+                                    {tickets.AverageSLAPerformance.toFixed(2)}%
                                 </Typography>
                                 <Typography color="">
                                     <AccessTime /> Across all customers
@@ -166,7 +166,7 @@ export default function CustomerDashboard() {
                                 Customer Ticket Distribution
                             </Typography>
                             <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={getCustomerTicketDistribution()}>
+                                <BarChart data={tickets.CustomerTicketDistribution}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="name" />
                                     <YAxis />
@@ -192,7 +192,7 @@ export default function CustomerDashboard() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {getCustomerStats().map((row) => (
+                                    {tickets.CustomerStats.map((row) => (
                                         <TableRow
                                             key={row.customer}
                                             hover
@@ -236,16 +236,16 @@ export default function CustomerDashboard() {
                     <DialogTitle>{`Tickets for ${selectedCustomer}`}</DialogTitle>
                     <DialogContent>
                         <List>
-                            {tickets
+                            {tickets['tickets']
                                 .filter(ticket => ticket.customer === selectedCustomer)
                                 .map(ticket => (
-                                    <ListItem key={ticket.ticketId}>
+                                    <ListItem key={ticket.id}>
                                         <ListItemText
                                             primary={ticket.issue}
                                             secondary={
                                                 <React.Fragment>
                                                     <Typography component="span" variant="body2" color="text.primary">
-                                                        Status: {ticket.currentStatus}
+                                                        Status: {ticket.current_status}
                                                     </Typography>
                                                     {` — ${ticket.category}, Severity: ${ticket.severity}`}
                                                 </React.Fragment>

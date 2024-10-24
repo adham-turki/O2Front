@@ -1,5 +1,5 @@
 
-import { useMemo } from 'react'
+import { useState,useEffect } from 'react'
 import {
   Box,
   Grid,
@@ -109,43 +109,28 @@ const ChartTitle = styled(Typography)(({ theme }) => ({
   color: theme.palette.text.primary,
 }))
 
-export default function ResolutionsDashboard({ resolutions }) {
-  const processRootCauseData = useMemo(() => {
-    const rootCauseData = {}
-    resolutions.forEach(issue => {
-      issue.solutions.forEach(solution => {
-        if (solution.rootCause) {
-          if (!rootCauseData[solution.rootCause]) {
-            rootCauseData[solution.rootCause] = { count: 0, totalTime: 0, solutions: [] }
-          }
-          rootCauseData[solution.rootCause].count++
-          rootCauseData[solution.rootCause].solutions.push(solution.solution)
-          issue.tickets.forEach(ticket => {
-            if (ticket.resolvedOn) {
-              const resolutionTime = (new Date(ticket.resolvedOn) - new Date(ticket.reportedOn)) / (1000 * 60 * 60)
-              rootCauseData[solution.rootCause].totalTime += resolutionTime
-            }
-          })
+export default function ResolutionsDashboard  ()  {
+  const [data, setData] = useState(); // Initialize with an empty array
+  const apiUrl = import.meta.env.VITE_API_HOST;
+
+  useEffect(() => {
+    const fetchResolutions = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/api/resolutionsDashboard`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
-      })
-    })
-    return Object.entries(rootCauseData).map(([cause, data]) => ({
-      cause,
-      count: data.count,
-      avgResolutionTime: data.totalTime / data.count,
-      solutions: data.solutions,
-    })).sort((a, b) => b.count - a.count)
-  }, [resolutions])
+        const res = await response.json();
+        setData(res);
+        console.log(res);
+      } catch (error) {
+        console.error('Error fetching resolutions:', error);
+      }
+    };
+    fetchResolutions();
+  }, []);
 
-  const rootCauseFrequency = useMemo(() => {
-    return processRootCauseData.slice(0, 10)
-  }, [processRootCauseData])
 
-  const averageResolutionTimeByRootCause = useMemo(() => {
-    return processRootCauseData
-      .sort((a, b) => b.avgResolutionTime - a.avgResolutionTime)
-      .slice(0, 10)
-  }, [processRootCauseData])
 
   return (
     <ThemeProvider theme={theme}>
@@ -172,7 +157,7 @@ export default function ResolutionsDashboard({ resolutions }) {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {rootCauseFrequency.map((row) => (
+                    {data.rootCauseFrequency.map((row) => (
                       <StyledTableRow key={row.cause}>
                         <StyledTableCell component="th" scope="row">
                           {row.cause}
@@ -204,7 +189,7 @@ export default function ResolutionsDashboard({ resolutions }) {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {averageResolutionTimeByRootCause.map((row) => (
+                    {data.averageResolutionTimeByRootCause.map((row) => (
                       <StyledTableRow key={row.cause}>
                         <StyledTableCell component="th" scope="row">
                           {row.cause}
@@ -226,7 +211,7 @@ export default function ResolutionsDashboard({ resolutions }) {
                 <ChartTitle variant="h5">Top 10 Root Causes</ChartTitle>
               </div>
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={rootCauseFrequency}>
+                <BarChart data={data.rootCauseFrequency}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="cause" angle={-45} textAnchor="end" height={80} />
                   <YAxis />
@@ -246,7 +231,7 @@ export default function ResolutionsDashboard({ resolutions }) {
                 <ChartTitle variant="h5">Average Resolution Time by Root Cause</ChartTitle>
               </div>
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={averageResolutionTimeByRootCause}>
+                <BarChart data={data.averageResolutionTimeByRootCause}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="cause" angle={-45} textAnchor="end" height={80} />
                   <YAxis />

@@ -3,53 +3,7 @@ import  { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertCircle, Clock, User, Tag, Calendar, Layers, Hash, MessageSquare } from 'lucide-react'
 import PropTypes from 'prop-types'
-const groupTickets = (tickets) => {
-  console.log(tickets, "hh")
-  const root = { name: 'All Tickets', type: 'root', children: [], value: tickets.length }
 
-  const tiers = {}
-  const domains = {}
-  const severities = {}
-  const statuses = {}
-
-  tickets.forEach((ticket) => {
-    // Tier level
-    if (!tiers[ticket.tiers]) {
-      tiers[ticket.tiers] = { name: ticket.tiers, type: 'tier', children: [], value: 0 }
-      root.children.push(tiers[ticket.tiers])
-    }
-    tiers[ticket.tiers].value++
-
-    // Domain level
-    ticket.domains.forEach(domain => {
-      const domainKey = `${ticket.tiers}-${domain.name}`
-      if (!domains[domainKey]) {
-        domains[domainKey] = { name: domain.name, type: 'domain', children: [], value: 0 }
-        tiers[ticket.tiers].children.push(domains[domainKey])
-      }
-      domains[domainKey].value++
-
-      // Severity level
-      const severityKey = `${domainKey}-${ticket.severity}`
-      if (!severities[severityKey]) {
-        severities[severityKey] = { name: ticket.severity, type: 'severity', children: [], value: 0 }
-        domains[domainKey].children.push(severities[severityKey])
-      }
-      severities[severityKey].value++
-
-      // Status level
-      const statusKey = `${severityKey}-${ticket.ticketStatus}`
-      if (!statuses[statusKey]) {
-        statuses[statusKey] = { name: ticket.ticketStatus, type: 'status', tickets: [], value: 0 }
-        severities[severityKey].children.push(statuses[statusKey])
-      }
-      statuses[statusKey].tickets.push(ticket)
-      statuses[statusKey].value++
-    })
-  })
-
-  return root
-}
 
 const FunnelLevel = ({ node, depth, onSelect }) => {
   const maxWidth = 100 - depth * 20
@@ -121,16 +75,24 @@ TicketCard.propTypes = {
   )
 }
 
-export default function Component({ tickets , resolutions }) {
+export default function Component({ resolutions }) {
   const [groupedTickets, setGroupedTickets] = useState(null)
   const [selectedPath, setSelectedPath] = useState([])
   const [selectedTicket, setSelectedTicket] = useState(null)
-
+  const apiUrl = import.meta.env.VITE_API_HOST;
   useEffect(() => {
-    if (tickets.length > 0) {
-      setGroupedTickets(groupTickets(tickets))
-    }
-  }, [tickets])
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/api/advanced-funnel-data`);
+        const data = await response.json();
+        setGroupedTickets(data || []); // Ensure data is an array
+        console.log("Tickets data:", data);
+      } catch (error) {
+        console.error("Error fetching tickets:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleSelect = (node, depth) => {
     setSelectedPath((prev) => {

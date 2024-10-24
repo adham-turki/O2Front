@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Box, Typography, Grid, Chip, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
      CardContent, CircularProgress, LinearProgress, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText,
@@ -40,62 +40,34 @@ const ChartTitle = styled(Typography)(({ theme }) => ({
     },
 }))
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']
 
-export default function CustomerDashboard({ resolutions, tickets }) {
+export default function CustomerDashboard() {
     const [loading, setLoading] = useState(true)
     const [selectedCustomer, setSelectedCustomer] = useState(null)
     const [openDialog, setOpenDialog] = useState(false)
+    const [data, setData] = useState(null)
+    const apiUrl = import.meta.env.VITE_API_HOST;
 
-    useEffect(() => {
-        if (resolutions && tickets) {
-            setLoading(false)
-        }
-    }, [resolutions, tickets])
+useEffect(() => {
+    const fetchData = async () => {
+        setLoading(true);
+        const response = await fetch(`${apiUrl}/api/stats/CustomerDashboard`);
+        const ahmad = await response.json();
+        setData(ahmad);
+        console.log(ahmad);
+    }
+    fetchData();
+}, [])
 
-    const getCustomerStats = useMemo(() => {
-        const stats = {}
-        tickets.forEach(ticket => {
-            ticket.domains.forEach(domain => {
-                if (!stats[domain.name]) {
-                    stats[domain.name] = { total: 0, solved: 0, slaViolations: 0 }
-                }
-                stats[domain.name].total += 1
-                if (ticket.resolvedOn) stats[domain.name].solved += 1
-                if (!ticket.metSla) stats[domain.name].slaViolations += 1
-            })
-        })
-        return Object.entries(stats).map(([customer, data]) => ({
-            customer,
-            total: data.total,
-            solved: data.solved,
-            slaViolations: data.slaViolations,
-            slaPerformance: ((data.total - data.slaViolations) / data.total) * 100
-        })).sort((a, b) => b.total - a.total)
-    }, [tickets])
+useEffect(() => {
+    if (data) {
+        setLoading(false);
+    }
+}, [data])
 
-    const getCustomerTicketDistribution = useMemo(() => {
-        const distribution = {}
-        tickets.forEach(ticket => {
-            ticket.domains.forEach(domain => {
-                distribution[domain.name] = (distribution[domain.name] || 0) + 1
-            })
-        })
-        return Object.entries(distribution).map(([name, value]) => ({ name, value }))
-    }, [tickets])
-
-
-
-    const getTopFiveCustomersBySLA = useMemo(() => {
-        return getCustomerStats
-            .sort((a, b) => b.slaPerformance - a.slaPerformance)
-            .slice(0, 5)
-            .map((customer, index) => ({
-                name: customer.customer,
-                value: customer.slaPerformance,
-                color: COLORS[index]
-            }))
-    }, [getCustomerStats])
+const getCustomerStats = data?.getCustomerStats || [];
+const getCustomerTicketDistribution = data?.getCustomerTicketDistribution || [];
+const getTopFiveCustomersBySLA = data?.getTopFiveCustomersBySLA || [];
 
     const handleCustomerClick = (customer) => {
         setSelectedCustomer(customer)
@@ -262,7 +234,7 @@ export default function CustomerDashboard({ resolutions, tickets }) {
                     </DialogTitle>
                     <DialogContent>
                         <List>
-                            {tickets
+                            {data.tickets
                                 .filter(ticket => ticket.domains.some(domain => domain.name === selectedCustomer))
                                 .map(ticket => (
                                     <ListItem

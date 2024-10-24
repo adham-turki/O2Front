@@ -1,6 +1,6 @@
 import './App.css';
-import EngineersDashboard from './components/EmployeeStats';
-import TicketsDashboard from './components/TicketsStatistics';
+import EngineersDashboard from './components/EmployeeStats.jsx';
+import TicketsDashboard from './components/TicketsDashboard.jsx';
 import MainDashboard from './components/MainDashboard';
 import CustomDashboard from './components/TicketsTable.jsx';
 import Sidebar from './components/Sidebar';
@@ -49,7 +49,7 @@ function App() {
             <Route path="/main-dashboard" element={<MainDashboard  tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/ticket-dashboard" element={<TicketsDashboard tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/engineers-dashboard" element={<EngineersDashboard tickets={ticketsData} resolutions={resolutions} />} />
-            <Route path="/table-dashboard" element={<CustomDashboard tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/table-dashboard" element={<CustomDashboard  tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/ticket-flow" element={<TicketWorkflow />} />
             <Route path="/customer-dashboard" element={<CustomerDashboard tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/tickets-funnel" element={<Sankey tickets={ticketsData} resolutions={resolutions} />} />

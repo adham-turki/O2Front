@@ -4,7 +4,7 @@ import {Box,Container,Typography,Tab,Tabs,styled,Select,MenuItem,FormControl,Inp
 } from '@mui/material'
 import { TrendingUp,Engineering,BugReport,FilterList,Business} from '@mui/icons-material'
 import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
-import TicketsDashboard from './TicketsStatistics'
+import TicketsDashboard from './TicketsDashboard'
 import EngineersDashboard from './EmployeeStats'
 import ResolutionsDashboard from './ResolutionsDashboard'
 import CustomerDashboard from './Customer'

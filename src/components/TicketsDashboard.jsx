@@ -73,22 +73,25 @@ AnimatedNumber.propTypes = {
 };
 
 
-export default function TicketsDashboard({ tickets, resolutions }) {
+export default function TicketsDashboard() {
+  const [data, setData] = useState();
   const [loading, setLoading] = useState(true);
+  const apiUrl = import.meta.env.VITE_API_HOST;
+
 
   useEffect(() => {
-    if (tickets && resolutions) {
+    const fetchData = async () => {
+      setLoading(true);
+      const response = await fetch(`${apiUrl}/api/hello`);
+      const res = await response.json(); // Assuming you don't need to use 'data'
+      console.log(res);
+      
+      setData(res);
       setLoading(false);
-    }
-  }, [tickets, resolutions]);
+    };
+    fetchData();
+  }, []);
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
   const cardTitles = [
     { title: 'Monthly Ticket Trends', icon: CalendarChartIcon },
     { title: 'Ticket Trend', icon: TrendingUp },
@@ -107,80 +110,18 @@ export default function TicketsDashboard({ tickets, resolutions }) {
     icon: PropTypes.node.isRequired,
   };
 
-  // Data processing functions
-  const processTicketStats = () => {
-    const totalTickets = tickets.length;
-    const solvedTickets = tickets.filter(ticket => ticket.resolvedOn).length;
-    const openTickets = totalTickets - solvedTickets;
-    const avgResolutionTime = tickets.reduce((acc, ticket) => {
-      if (ticket.resolvedOn) {
-        return acc + (new Date(ticket.resolvedOn) - new Date(ticket.reportedOn)) / (1000 * 60 * 60);
-      }
-      return acc;
-    }, 0) / solvedTickets;
-    const slaCompliance = tickets.filter(ticket => ticket.metSla).length / totalTickets * 100;
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-    return { totalTickets, solvedTickets, openTickets, avgResolutionTime, slaCompliance };
-  };
-
-  const processMonthlyData = () => {
-    const monthlyData = {};
-    tickets.forEach(ticket => {
-      const month = new Date(ticket.reportedOn).toLocaleString('default', { month: 'long' });
-      if (!monthlyData[month]) {
-        monthlyData[month] = { opened: 0, resolved: 0 };
-      }
-      monthlyData[month].opened++;
-      if (ticket.resolvedOn) {
-        monthlyData[month].resolved++;
-      }
-    });
-    return Object.entries(monthlyData).map(([month, data]) => ({
-      month,
-      opened: data.opened,
-      resolved: data.resolved,
-      resolutionRate: (data.resolved / data.opened) * 100,
-    }));
-  };
-
-  const processSeverityData = () => {
-    const severityData = {};
-    tickets.forEach(ticket => {
-      if (!severityData[ticket.severity]) {
-        severityData[ticket.severity] = { total: 0, resolved: 0, totalTime: 0 };
-      }
-      severityData[ticket.severity].total++;
-      if (ticket.resolvedOn) {
-        severityData[ticket.severity].resolved++;
-        const resolutionTime = (new Date(ticket.resolvedOn) - new Date(ticket.reportedOn)) / (1000 * 60 * 60);
-        severityData[ticket.severity].totalTime += resolutionTime;
-      }
-    });
-    return Object.entries(severityData).map(([severity, data]) => ({
-      severity,
-      total: data.total,
-      resolved: data.resolved,
-      avgResolutionTime: data.totalTime / data.resolved || 0,
-      slaCompliance: (data.resolved / data.total) * 100,
-    }));
-  };
-
-  const processTicketTrendData = () => {
-    const trendData = tickets.reduce((acc, ticket) => {
-      const date = ticket.reportedOn.split('T')[0];
-      if (!acc[date]) {
-        acc[date] = { date, count: 0 };
-      }
-      acc[date].count++;
-      return acc;
-    }, {});
-    return Object.values(trendData);
-  };
-
-  const ticketStats = processTicketStats();
-  const monthlyData = processMonthlyData();
-  const severityData = processSeverityData();
-  const ticketTrendData = processTicketTrendData();
+  const ticketStats = data.processTicketStats;
+  const monthlyData = data.processMonthlyData;
+  const severityData = data.processSeverityData;
+  const ticketTrendData = data.processTicketTrendData;
 
   const statCards = [
     { title: 'Total Tickets', value: ticketStats.totalTickets, icon: BarChartIcon, color: '#3f51b5' },

@@ -1,5 +1,5 @@
 
-import  { useEffect, useMemo, useState } from 'react'
+import  { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Typography,
@@ -44,7 +44,6 @@ import AssignmentIcon from '@mui/icons-material/Assignment'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import DoneAllIcon from '@mui/icons-material/DoneAll'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
-import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
 import PropTypes from 'prop-types'
 
 const StyledSelect = styled(Select)(({ theme }) => ({
@@ -216,39 +215,41 @@ ProgressCard.propTypes = {
   color: PropTypes.string.isRequired,
 }
 
-export default function CustomDashboard({ tickets, resolutions  }) {
+export default function CustomDashboard() {
   const [timeRange, setTimeRange] = useState('all')
   const navigate = useNavigate()
+  const [data, setData] = useState({})
+  const apiUrl = import.meta.env.VITE_API_HOST;
 
-  const filteredTickets = useMemo(() => {
-    if (timeRange === 'all') return tickets
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/api/stats/CustomDashboard`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const res = await response.json();
+        console.log(res);
+        
+        setData(res);
+        console.log(res);
+      } catch (error) {
+        console.error('Error fetching tickets:', error);
+      }
+    };
+    fetchTickets();
+  },[])
+  
 
-    const now = new Date()
-    const filterDate = {
-      'last-week': subDays(now, 7),
-      'last-month': subMonths(now, 1),
-      'last-6-months': subMonths(now, 6),
-      'last-year': subYears(now, 1)
-    }[timeRange]
-
-    return tickets.filter(ticket => isAfter(parseISO(ticket.reportedOn), filterDate))
-  }, [tickets, timeRange])
-
-  const totalTickets = filteredTickets.length
-  const solvedTickets = filteredTickets.filter((ticket) => ticket.resolvedOn).length
+  const totalTickets = data.totalTickets || 0
+  const solvedTickets = data.solvedTickets || 0
   const openTickets = totalTickets - solvedTickets
 
-  const ticketTypeData = useMemo(() => {
-    const typeCounts = filteredTickets.reduce((acc, ticket) => {
-      acc[ticket.type] = (acc[ticket.type] || 0) + 1
-      return acc
-    }, {})
-    return Object.entries(typeCounts).map(([name, value]) => ({ name, value }))
-  }, [filteredTickets])
+ 
 
   const handleRowClick = (ticketId) => {
-    const selectedTicket = tickets.find(ticket => ticket.id === ticketId)
-    const ticketResolutions = resolutions.filter(resolution => 
+    const selectedTicket = data.filteredTickets.find(ticket => ticket.id === ticketId)
+    const ticketResolutions = data.ticketResolutions?.ticketResolution?.filter(resolution => 
       resolution.tickets.some(ticket => ticket.id === ticketId)
     )
     navigate('/ticket-flow', { state: { selectedTicket, ticketResolutions } })
@@ -334,7 +335,7 @@ export default function CustomDashboard({ tickets, resolutions  }) {
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie
-                          data={ticketTypeData}
+                          data={data.ticketTypeData || []}
                           dataKey="value"
                           nameKey="name"
                           cx="50%"
@@ -342,7 +343,7 @@ export default function CustomDashboard({ tickets, resolutions  }) {
                           outerRadius={80}
                           label
                         >
-                          {ticketTypeData.map((entry, index) => (
+                          {(data.ticketTypeData || []).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={typeColors[entry.name]} />
                           ))}
                         </Pie>
@@ -401,7 +402,7 @@ export default function CustomDashboard({ tickets, resolutions  }) {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                          {filteredTickets.map((ticket, index) => (
+                          {data.filteredTickets && data.filteredTickets.map((ticket, index) => (
                             <motion.tr
                               key={ticket.id}
                               onClick={() => handleRowClick(ticket.id)}

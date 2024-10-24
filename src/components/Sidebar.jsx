@@ -6,6 +6,7 @@ import { Menu as MenuIcon, Dashboard as DashboardIcon, Support as SupportIcon, A
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
+import GavelIcon from '@mui/icons-material/Gavel';
 
 const drawerWidth = 240;
 
@@ -42,6 +43,7 @@ const dashboards = [
   { name: 'Tickets', icon: <SupportIcon />, path: '/table-dashboard' },
   { name: 'Tickets Funnel', icon: <FilterAltIcon />, path: '/tickets-funnel' },
   { name: 'Advanced Tickets Funnel', icon: <AutoAwesome />, path: '/advanced-tickets-funnel' },
+  {name: 'Rules Engine' , icon: <GavelIcon />, path: '/rules-engine' },
 ];
 
 export default function Sidebar() {

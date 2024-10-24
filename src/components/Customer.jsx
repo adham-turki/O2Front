@@ -52,9 +52,8 @@ useEffect(() => {
     const fetchData = async () => {
         setLoading(true);
         const response = await fetch(`${apiUrl}/api/stats/CustomerDashboard`);
-        const ahmad = await response.json();
-        setData(ahmad);
-        console.log(ahmad);
+        const res = await response.json();
+        setData(res);
     }
     fetchData();
 }, [])

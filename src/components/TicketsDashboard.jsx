@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import {
   Box, Typography, Grid, CircularProgress,
   ThemeProvider, createTheme, CardContent, SvgIcon
@@ -19,10 +19,9 @@ import {
   EmojiEvents,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import PropTypes from 'prop-types';
 import { StyledPaperForTickets as StyledPaper } from './StyledPaper';
 import { StyledCardFortickets as StyledCard } from './StyledCards';
-
+import PropTypes from 'prop-types';
 
 const theme = createTheme({
   palette: {
@@ -38,7 +37,7 @@ const theme = createTheme({
     },
   },
 });
-// Custom SVG icon for Monthly Ticket Trends
+
 const CalendarChartIcon = (props) => (
   <SvgIcon {...props}>
     <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
@@ -48,7 +47,6 @@ const CalendarChartIcon = (props) => (
 );
 
 const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F3A683', '#F7D794', '#778BEB', '#786FA6', '#F8A5C2'];
-
 
 const AnimatedNumber = ({ value }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -71,21 +69,16 @@ const AnimatedNumber = ({ value }) => {
 AnimatedNumber.propTypes = {
   value: PropTypes.number.isRequired,
 };
-
-
 export default function TicketsDashboard() {
   const [data, setData] = useState();
   const [loading, setLoading] = useState(true);
   const apiUrl = import.meta.env.VITE_API_HOST;
 
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       const response = await fetch(`${apiUrl}/api/hello`);
-      const res = await response.json(); // Assuming you don't need to use 'data'
-      console.log(res);
-      
+      const res = await response.json();
       setData(res);
       setLoading(false);
     };
@@ -99,16 +92,18 @@ export default function TicketsDashboard() {
     { title: 'Average Resolution Time by Severity', icon: Speed },
     { title: 'SLA Compliance by Severity', icon: EmojiEvents },
   ];
-  const TitleWithIcon1 = ({ title, icon: Icon }) => (
+
+  const TitleWithIcon = ({ title, icon: Icon }) => (
     <Typography variant="h5" component="h2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <Icon color="primary" sx={{ fontSize: 28 }} />
       {title}
     </Typography>
   );
-  TitleWithIcon1.propTypes = {
+  TitleWithIcon.propTypes = {
     title: PropTypes.string.isRequired,
-    icon: PropTypes.node.isRequired,
+    icon: PropTypes.elementType.isRequired,
   };
+  
 
   if (loading) {
     return (
@@ -120,7 +115,10 @@ export default function TicketsDashboard() {
 
   const ticketStats = data.processTicketStats;
   const monthlyData = data.processMonthlyData;
-  const severityData = data.processSeverityData;
+  const severityData = data.processSeverityData.map(item => ({
+    ...item,
+    severity: `${item.severity}` // Convert severity to SEV0, SEV1, etc.
+  }));
   const ticketTrendData = data.processTicketTrendData;
 
   const statCards = [
@@ -130,16 +128,7 @@ export default function TicketsDashboard() {
     { title: 'Avg. Resolution Time', value: `${ticketStats.avgResolutionTime.toFixed(2)}h`, icon: AccessTime, color: '#9c27b0' },
     { title: 'SLA Compliance', value: `${ticketStats.slaCompliance.toFixed(2)}%`, icon: GppGood, color: '#2196f3' },
   ];
-  const TitleWithIcon = ({ title, icon: Icon }) => (
-    <Typography variant="h5" component="h2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <Icon color="primary" />
-      {title}
-    </Typography>
-  );
-  TitleWithIcon.propTypes = {
-    title: PropTypes.string.isRequired,
-    icon: PropTypes.node.isRequired,
-  };
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ flexGrow: 1, bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
@@ -184,10 +173,9 @@ export default function TicketsDashboard() {
               </ResponsiveContainer>
             </StyledPaper>
           </Grid>
-
           <Grid item xs={12} md={6}>
             <StyledPaper elevation={3}>
-              <TitleWithIcon1 title={cardTitles[1].title} icon={cardTitles[1].icon} />
+              <TitleWithIcon title={cardTitles[1].title} icon={cardTitles[1].icon} />
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={ticketTrendData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -202,7 +190,7 @@ export default function TicketsDashboard() {
           </Grid>
           <Grid item xs={12} md={6}>
             <StyledPaper elevation={3}>
-              <TitleWithIcon1 title={cardTitles[2].title} icon={cardTitles[2].icon} />
+              <TitleWithIcon title={cardTitles[2].title} icon={cardTitles[2].icon} />
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -213,6 +201,8 @@ export default function TicketsDashboard() {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="total"
+                    nameKey="severity"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {severityData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -226,7 +216,7 @@ export default function TicketsDashboard() {
           </Grid>
           <Grid item xs={12} md={6}>
             <StyledPaper elevation={3}>
-              <TitleWithIcon1 title={cardTitles[3].title} icon={cardTitles[3].icon} />
+              <TitleWithIcon title={cardTitles[3].title} icon={cardTitles[3].icon} />
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={severityData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -241,7 +231,7 @@ export default function TicketsDashboard() {
           </Grid>
           <Grid item xs={12}>
             <StyledPaper elevation={3}>
-              <TitleWithIcon1 title={cardTitles[4].title} icon={cardTitles[4].icon} />
+              <TitleWithIcon title={cardTitles[4].title} icon={cardTitles[4].icon} />
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={severityData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -259,7 +249,3 @@ export default function TicketsDashboard() {
     </ThemeProvider>
   );
 }
-TicketsDashboard.propTypes = {
-  tickets: PropTypes.array.isRequired,
-  resolutions: PropTypes.array.isRequired,
-};

@@ -18,7 +18,7 @@ const StyledSelect = styled(Select)(({ theme }) => ({
   },
 }))
 
-export default function MainDashboard({ tickets, resolutions }) {
+export default function MainDashboard({ tickets, resolutions ,data}) {
   const [tabValue, setTabValue] = useState(0)
   const [dateRange, setDateRange] = useState('all')
 
@@ -88,7 +88,7 @@ export default function MainDashboard({ tickets, resolutions }) {
         )}
 
         {tabValue === 2 && (
-          <ResolutionsDashboard resolutions={resolutions} />
+          <ResolutionsDashboard resolutions={resolutions} data={data} />
         )}
           {tabValue === 3 && (
           <CustomerDashboard tickets={filteredTickets} resolutions={resolutions}/>
@@ -101,4 +101,6 @@ export default function MainDashboard({ tickets, resolutions }) {
 MainDashboard.propTypes = {
   tickets: PropTypes.array.isRequired,
   resolutions: PropTypes.array.isRequired,
+  data: PropTypes.array.isRequired,
+
 };

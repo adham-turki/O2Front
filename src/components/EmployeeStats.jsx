@@ -100,7 +100,6 @@ export default function EngineersDashboard() {
     const res = await response.json()
     setData(res)
     setLoading(false)
-    console.log(res);
     
    }
     fetchData()

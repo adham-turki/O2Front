@@ -10,11 +10,14 @@ import TicketWorkflow from './components/TicketFlow';
 import CustomerDashboard from './components/Customer';
 import Component from './components/AdvancedFunnel.jsx';
 import Sankey from './components/SankeyChart';
+import RuleEngine from './components/RulesEngine';
+import ResolutionsDashboard from './components/ResolutionsDashboard';
 
 
 function App() {
   const [ticketsData, setTicketsData] = useState([]);
   const [resolutions, setResolutions] = useState([]);
+  const [resolutionsData, setData] = useState([]);
   useEffect(() => {
     const fetchtickets = async () => {
       try {
@@ -36,6 +39,20 @@ function App() {
         console.error("Error fetching ticket data:", error);
       }
     };
+    const fetchResolutionsDashboard = async () => {
+      try {
+        const response = await fetch(`http://localhost:1337/api/resolutionsDashboard`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const res = await response.json();
+        setData(res);
+        console.log(res);
+      } catch (error) {
+        console.error('Error fetching resolutions:', error);
+      }
+    };
+    fetchResolutionsDashboard();
     fetchtickets();
     fetchResolutions();
   }, []);
@@ -46,14 +63,16 @@ function App() {
         <div style={{ flexGrow: 1, marginTop: '48px' }}>
           <Routes>
             <Route path="/" element={<Navigate to="/main-dashboard" />} />
-            <Route path="/main-dashboard" element={<MainDashboard  tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/main-dashboard" element={<MainDashboard  tickets={ticketsData} resolutions={resolutions} data={resolutionsData} />} />
             <Route path="/ticket-dashboard" element={<TicketsDashboard tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/engineers-dashboard" element={<EngineersDashboard tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/table-dashboard" element={<CustomDashboard  tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/ticket-flow" element={<TicketWorkflow />} />
+            <Route path="/resolutions-dashboard" element={<ResolutionsDashboard  />} />
             <Route path="/customer-dashboard" element={<CustomerDashboard tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/tickets-funnel" element={<Sankey tickets={ticketsData} resolutions={resolutions} />} />
             <Route path="/advanced-tickets-funnel" element={<Component tickets={ticketsData} resolutions={resolutions} />} />
+            <Route path="/rules-engine" element={<RuleEngine />} />
           </Routes>
         </div>
       </div>

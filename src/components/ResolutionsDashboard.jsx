@@ -1,5 +1,4 @@
 
-import { useState,useEffect } from 'react'
 import {
   Box,
   Grid,
@@ -109,29 +108,7 @@ const ChartTitle = styled(Typography)(({ theme }) => ({
   color: theme.palette.text.primary,
 }))
 
-export default function ResolutionsDashboard  ()  {
-  const [data, setData] = useState(); // Initialize with an empty array
-  const apiUrl = import.meta.env.VITE_API_HOST;
-
-  useEffect(() => {
-    const fetchResolutions = async () => {
-      try {
-        const response = await fetch(`${apiUrl}/api/resolutionsDashboard`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const res = await response.json();
-        setData(res);
-        console.log(res);
-      } catch (error) {
-        console.error('Error fetching resolutions:', error);
-      }
-    };
-    fetchResolutions();
-  }, []);
-
-
-
+export default function ResolutionsDashboard  ({data})  {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -248,5 +225,5 @@ export default function ResolutionsDashboard  ()  {
   )
 }
 ResolutionsDashboard.propTypes = {
-  resolutions: PropTypes.array.isRequired,
+  data: PropTypes.array.isRequired,
 }

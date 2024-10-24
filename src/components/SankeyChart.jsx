@@ -19,76 +19,7 @@ export default function SankeyChart() {
     fetchData();
   }, []);
 
-  // // Create Sankey data
-  // const sankeyData = [
-  //   ["From", "To", "Weight", { role: 'tooltip', type: 'string' }], // Add tooltip column
-  // ];
-
-  // tickets.forEach((ticket) => {
-  //   const { severity, type, domains, tags, title, tier, reportedBy } = ticket || {};
-
-  //   // Check for missing or null values before pushing to sankeyData
-  //   if (severity && type && title) {
-  //     // Add connections and tooltips
-  //     sankeyData.push([
-  //       "All Tickets",
-  //       severity,
-  //       2,
-  //       `Ticket: ${title}`, // Tooltip shows ticket title
-  //     ]);
-
-  //     sankeyData.push([
-  //       severity,
-  //       type,
-  //       1,
-  //       `Ticket: ${title}`, // Tooltip shows ticket title
-  //     ]);
-  //   }
-
-  //   if (domains && Array.isArray(domains)) {
-  //     domains.forEach((domain) => {
-  //       if (domain && domain.name && type) {
-  //         sankeyData.push([
-  //           type,
-  //           domain.name,
-  //           1,
-  //           `Ticket: ${title}`, // Tooltip for domain connection
-  //         ]);
-
-  //         if (tier) {
-  //           sankeyData.push([
-  //             domain.name,
-  //             tier,
-  //             1,
-  //             `Ticket: ${title}`, // Tooltip for tier connection
-  //           ]);
-  //         }
-  //       }
-  //     });
-  //   }
-
-  //   if (tags && Array.isArray(tags)) {
-  //     tags.forEach((tag) => {
-  //       if (tag && tag.label && tier) {
-  //         sankeyData.push([
-  //           tier,
-  //           tag.label,
-  //           1,
-  //           `Ticket: ${title}`, // Tooltip for tag connection
-  //         ]);
-
-  //         if (reportedBy && reportedBy.name) {
-  //           sankeyData.push([
-  //             tag.label,
-  //             reportedBy.name,
-  //             1,
-  //             `Ticket: ${title}`, // Tooltip for reporter connection
-  //           ]);
-  //         }
-  //       }
-  //     });
-  //   }
-  // });
+  
 
   // Sankey chart options
   const options = {
@@ -99,7 +30,7 @@ export default function SankeyChart() {
     //     nodeWidth: 15,
     //   },
     //   link: {
-    //     colorMode: "gradient",
+    //     colorMode: " gradient linear " 
     //   },
     // },
   };

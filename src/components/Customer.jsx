@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Box, Typography, Grid, Chip, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
      CardContent, CircularProgress, LinearProgress, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText,
@@ -40,7 +40,6 @@ const ChartTitle = styled(Typography)(({ theme }) => ({
     },
 }))
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']
 
 export default function CustomerDashboard() {
     const [loading, setLoading] = useState(true)

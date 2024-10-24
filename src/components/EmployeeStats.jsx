@@ -11,7 +11,6 @@ import ForceGraph2D from 'react-force-graph-2d'
 import { EmojiEvents, Speed, Radar as RadarIcon, Group, EmojiPeople } from '@mui/icons-material';
 import PropTypes from 'prop-types'
 import { StyledPaper } from './StyledPaper';
-import { set } from 'date-fns';
 
 
 const COLORS = [
@@ -90,7 +89,7 @@ const LeaderboardItem = styled(ListItem)(({ theme }) => ({
   },
 }))
 
-export default function EngineersDashboard({ tickets, resolutions }) {
+export default function EngineersDashboard() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState()
   const apiUrl = import.meta.env.VITE_API_HOST;

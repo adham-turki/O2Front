@@ -1,5 +1,5 @@
 
-import  { useEffect, useMemo, useState } from 'react'
+import  { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Typography,
@@ -44,7 +44,6 @@ import AssignmentIcon from '@mui/icons-material/Assignment'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import DoneAllIcon from '@mui/icons-material/DoneAll'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
-import { parseISO, subDays, subMonths, subYears, isAfter } from 'date-fns'
 import PropTypes from 'prop-types'
 
 const StyledSelect = styled(Select)(({ theme }) => ({
@@ -216,7 +215,7 @@ ProgressCard.propTypes = {
   color: PropTypes.string.isRequired,
 }
 
-export default function CustomDashboard({ tickets, resolutions  }) {
+export default function CustomDashboard() {
   const [timeRange, setTimeRange] = useState('all')
   const navigate = useNavigate()
   const [data, setData] = useState({})

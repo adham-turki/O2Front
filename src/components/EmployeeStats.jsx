@@ -11,6 +11,7 @@ import ForceGraph2D from 'react-force-graph-2d'
 import { EmojiEvents, Speed, Radar as RadarIcon, Group, EmojiPeople } from '@mui/icons-material';
 import PropTypes from 'prop-types'
 import { StyledPaper } from './StyledPaper';
+import { set } from 'date-fns';
 
 
 const COLORS = [
@@ -91,12 +92,20 @@ const LeaderboardItem = styled(ListItem)(({ theme }) => ({
 
 export default function EngineersDashboard({ tickets, resolutions }) {
   const [loading, setLoading] = useState(true)
+  const [data, setData] = useState()
+  const apiUrl = import.meta.env.VITE_API_HOST;
 
   useEffect(() => {
-    if (tickets && resolutions) {
-      setLoading(false)
-    }
-  }, [tickets, resolutions])
+   const fetchData = async () => {
+    const response = await fetch(`${apiUrl}/api/stats/EngineersDashboard`)
+    const res = await response.json()
+    setData(res)
+    setLoading(false)
+    console.log(res);
+    
+   }
+    fetchData()
+  }, [])
 
   if (loading) {
     return (
@@ -106,95 +115,12 @@ export default function EngineersDashboard({ tickets, resolutions }) {
     )
   }
 
-  // Data processing functions
-  const processOnCallLeaderboard = () => {
-    const onCallCounts = tickets.reduce((acc, ticket) => {
-      const owners = ticket.owners
-      owners.forEach(owner => {
-        acc[owner.name] = (acc[owner.name] || 0) + 1
-      })
-      return acc
-    }, {})
-    return Object.entries(onCallCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5)
-  }
 
-  const processParticipationNetwork = () => {
-    const nodes = new Set()
-    const links = []
-    tickets.forEach(ticket => {
-      const engineers = ticket.engagements.flatMap(engagement => 
-        engagement.members.map(member => member.name)
-      )
-      engineers.forEach(engineer => {
-        nodes.add(engineer)
-        engineers.forEach(otherEngineer => {
-          if (engineer !== otherEngineer) {
-            links.push({ source: engineer, target: otherEngineer })
-          }
-        })
-      })
-    })
-    return {
-      nodes: Array.from(nodes).map(id => ({ id })),
-      links
-    }
-  }
 
-  const processTopContributors = () => {
-    const contributorData = tickets.reduce((acc, ticket) => {
-      const addContribution = (user, role) => {
-        if (!acc[user]) acc[user] = { onCall: 0, participant: 0, solver: 0 }
-        acc[user][role]++
-      }
-
-      ticket.owners.forEach(owner => addContribution(owner.name, 'onCall'))
-      ticket.engagements.forEach(engagement => 
-        engagement.members.forEach(member => addContribution(member.name, 'participant'))
-      )
-      if (ticket.resolvedOn) ticket.owners.forEach(owner => addContribution(owner.name, 'solver'))
-
-      return acc
-    }, {})
-
-    return Object.entries(contributorData).map(([name, roles]) => ({
-      name,
-      ...roles,
-      total: roles.onCall + roles.participant + roles.solver
-    })).sort((a, b) => b.total - a.total).slice(0, 10)
-  }
-
-  const processEngineerData = () => {
-    const engineerData = {}
-    tickets.forEach(ticket => {
-      ticket.owners.forEach(owner => {
-        const engineer = owner.name
-        if (!engineerData[engineer]) {
-          engineerData[engineer] = { total: 0, resolved: 0, totalTime: 0 }
-        }
-        engineerData[engineer].total++
-        if (ticket.resolvedOn) {
-          engineerData[engineer].resolved++
-          const resolutionTime = (new Date(ticket.resolvedOn) - new Date(ticket.reportedOn)) / (1000 * 60 * 60)
-          engineerData[engineer].totalTime += resolutionTime
-        }
-      })
-    })
-    return Object.entries(engineerData).map(([engineer, data]) => ({
-      engineer,
-      total: data.total,
-      resolved: data.resolved,
-      resolutionRate: (data.resolved / data.total) * 100,
-      avgResolutionTime: data.totalTime / data.resolved || 0,
-    })).sort((a, b) => b.resolutionRate - a.resolutionRate)
-  }
-
-  const onCallLeaderboard = processOnCallLeaderboard()
-  const participationNetwork = processParticipationNetwork()
-  const topContributors = processTopContributors()
-  const engineerData = processEngineerData()
+  const onCallLeaderboard =    data.processOnCallLeaderboard
+  const participationNetwork = data.processParticipationNetwork
+  const topContributors =      data.processTopContributors
+  const engineerData =         data.processEngineerData
 
   const ChartTitleWithIcon = ({ title, icon: Icon }) => (
     <ChartTitle variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
